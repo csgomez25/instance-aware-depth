@@ -9,6 +9,7 @@ table) keep their own pixels. Re-running skips finished images.
 """
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -39,7 +40,8 @@ def main():
     weights = C.CKPT / args.model
     if not weights.exists():  # ultralytics downloads by name into the current directory
         C.CKPT.mkdir(parents=True, exist_ok=True)
-        Path(YOLO(args.model).ckpt_path).rename(weights)
+        # move, not rename: CKPT_DIR may be on another filesystem (Google Drive on Colab)
+        shutil.move(YOLO(args.model).ckpt_path, weights)
     model = YOLO(str(weights))
 
     with open(meta_path, "a") as meta:
