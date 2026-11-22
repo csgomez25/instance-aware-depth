@@ -25,7 +25,8 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | YOLO11s-seg masks for all 1449 NYU images | ✅ |
 | iBims-1 downloaded | ✅ |
 | Inference + point clouds, NYU eval, DA-2K eval | ✅ |
-| Fine-tuning script | ⬜ |
+| Fine-tuning script (`tools/train_nyu.py`), resumable, laptop + Colab | ✅ |
+| H1: baseline fine-tune, filled vs raw target | ⬜ |
 | Instance-aware loss, decoder change | ⬜ |
 | iBims-1 eval, boundary + flying-pixel metrics | ⬜ |
 | Experiments, paper, slides | ⬜ |
@@ -65,7 +66,15 @@ Data for Colab comes from a ~1.9 GB bundle, `iad_data.tar`:
 python infer.py path/to/image.png                  # depth png + .npy + coloured .ply -> results/infer/
 python eval_nyu.py --split val --gt filled         # tuning; --split test only for final numbers
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
+
+python train_nyu.py --name h1_silog_filled --train-gt filled --bs 4 --epochs 20   # fine-tune -> runs/<name>/
+python eval_nyu.py --split test --ckpt ../runs/h1_silog_filled/best.pth --tag h1_silog_filled
 ```
+Training follows the official Depth Anything V2 recipe (AdamW, decoder lr ×10, poly decay, 518×518 crops, flips)
+with fp16 and memory-efficient attention so it fits one GPU (batch 4 ≈ 2 GB, batch 8 ≈ 3.4 GB).
+The best epoch is chosen on the val split. Each run writes `config.json`, `log.csv` and `best.pth`;
+re-running the same command resumes after an interruption. Set `RUNS_DIR` to store runs elsewhere
+(the Colab notebook uses Google Drive).
 
 ## Data notes
 - NYU comes from the official labeled `.mat` (`tools/prepare_nyu.py`): 640×480 RGB, filled and raw depth (mm),
@@ -77,7 +86,7 @@ python eval_da2k.py                                # DA-2K accuracy per scene ->
 
 ## Repository layout
 ```
-tools/          our code: data prep, masks, inference, evaluation (training to come)
+tools/          our code: data prep, masks, dataset, losses, training, inference, evaluation
 scripts/        setup.sh, pack_data.sh
 colab/          Colab notebook
 data/splits/    NYU split lists (data itself is downloaded, not committed)

@@ -4,6 +4,7 @@ Paths can be overridden with environment variables so the same code runs on a
 laptop, on Colab, or in a teammate's clone:
     DATA_ROOT  datasets          (default: <repo>/data)
     CKPT_DIR   model checkpoints (default: <repo>/checkpoints)
+    RUNS_DIR   training runs     (default: <repo>/runs)
 
 The relative and metric models live in two different copies of the
 `depth_anything_v2` package inside the official repo, so the loader puts the
@@ -22,6 +23,7 @@ REPO = ROOT / "Depth-Anything-V2"
 DATA = Path(os.environ.get("DATA_ROOT", ROOT / "data"))
 CKPT = Path(os.environ.get("CKPT_DIR", ROOT / "checkpoints"))
 RESULTS = ROOT / "results"
+RUNS = Path(os.environ.get("RUNS_DIR", ROOT / "runs"))  # one folder per training run
 SPLITS = ROOT / "data" / "splits"  # committed with the code, independent of DATA_ROOT
 NYU_DIR = DATA / "nyu"              # produced by tools/prepare_nyu.py
 

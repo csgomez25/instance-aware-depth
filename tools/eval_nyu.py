@@ -38,6 +38,19 @@ def eval_mask(gt):
     return valid & (gt > 1e-3) & (gt < 10)
 
 
+@torch.no_grad()
+def evaluate(model, ids, gts=("filled", "raw")):
+    """Mean metrics over `ids` for each ground-truth kind, one prediction per image (same protocol as main())."""
+    rows = {g: [] for g in gts}
+    for img_id in ids:
+        pred = C.predict_nyu(model, cv2.imread(str(C.nyu_rgb_path(img_id))))
+        for g in gts:
+            gt = C.read_nyu_depth(img_id, g)
+            valid = eval_mask(gt)
+            rows[g].append(metrics(np.clip(pred[valid], 1e-3, 10), gt[valid]))
+    return {g: pd.DataFrame(r).mean().to_dict() for g, r in rows.items()}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", default="test", choices=["test", "val"])
