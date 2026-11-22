@@ -1,0 +1,9 @@
+# pip requirements (Colab already ships torch/torchvision; locally see environment.yml)
+opencv-python
+numpy
+matplotlib
+pandas
+tqdm
+h5py
+open3d>=0.19
+ultralytics==8.4.216

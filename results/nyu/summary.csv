@@ -1,2 +1,4 @@
-tag,n,ms,abs_rel,sq_rel,rmse,rmse_log,log10,d1,d2,d3
-pretrained_hypersim_vits,654,86.4137,0.1806,0.1374,0.5423,0.1855,0.0699,0.7524,0.9604,0.994
+tag,split,gt,n,ms,abs_rel,sq_rel,rmse,rmse_log,log10,d1,d2,d3
+pretrained_hypersim_vits,test,filled,654,341.1129,0.1864,0.156,0.5896,0.1957,0.0724,0.7397,0.9532,0.9914
+pretrained_hypersim_vits,test,raw,654,361.6416,0.1806,0.1375,0.5424,0.1855,0.0699,0.7523,0.9604,0.994
+pretrained_hypersim_vits,val,filled,92,361.2917,0.1975,0.2246,0.7325,0.2046,0.0744,0.7191,0.9616,0.99

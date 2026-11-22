@@ -18,6 +18,10 @@ Fine-tune Depth Anything V2 Small (indoor metric checkpoint) on NYU Depth V2.
 - Main test numbers on filled depth (comparable with the literature), also reported on raw depth.
   Boundary metrics come from iBims-1 and raw NYU pixels, not filled depth.
 - Cross-dataset results are reported both metric and per-image scale-aligned.
+- Resolution is never reduced to suit the laptop: training uses DA-V2's native 518×518 crop, and eval uses the
+  full border-free 625×468 image. Memory is handled with fp16 + memory-efficient attention, or by moving the
+  run to the T4. The only crop is the 6–8 px white border of the NYU labeled images, which is invalid data.
+- Runtime numbers for the paper are measured on the T4 (the laptop GPU throttles when hot).
 
 ## Work sections
 | | Section | Contents | Depends on |

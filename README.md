@@ -19,42 +19,61 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 ## Status
 | Part | State |
 |---|---|
-| Environment, checkpoints, DA-2K, NYU | ✅ |
-| Inference + point clouds (`tools/infer.py`) | ✅ |
-| NYU eval (`tools/eval_nyu.py`), DA-2K eval (`tools/eval_da2k.py`) | ✅ |
-| NYU data preparation from the .mat, validation split | ⬜ |
+| Environment, checkpoints, setup script, Colab notebook | ✅ |
+| NYU extracted from the .mat (filled + raw depth, instances, scenes) | ✅ |
+| Scene-disjoint split: 703 train / 92 val / 654 test | ✅ |
+| YOLO11s-seg masks for all 1449 NYU images | ✅ |
+| iBims-1 downloaded | ✅ |
+| Inference + point clouds, NYU eval, DA-2K eval | ✅ |
 | Fine-tuning script | ⬜ |
 | Instance-aware loss, decoder change | ⬜ |
 | iBims-1 eval, boundary + flying-pixel metrics | ⬜ |
 | Experiments, paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
-| Benchmark | Result |
-|---|---|
-| DA-2K (relative model) | **95.16 %** of 2068 pairs (paper: 95.3 %) |
-| NYU test, 654 images, raw depth, zero-shot Hypersim metric model | AbsRel 0.181 · RMSE 0.542 m · δ1 0.752 · 86 ms/image |
+| Benchmark | AbsRel | RMSE (m) | δ1 |
+|---|---|---|---|
+| NYU test (654), filled depth | 0.186 | 0.590 | 0.740 |
+| NYU test (654), raw depth | 0.181 | 0.542 | 0.752 |
+| NYU val (92), filled depth | 0.198 | 0.733 | 0.719 |
+| DA-2K (relative model) | **95.16 %** of 2068 pairs correct (paper: 95.3 %) | | |
 
-Most of the zero-shot NYU error is global scale: per-image scale alignment drops AbsRel from 0.177 to 0.071.
+NYU uses the zero-shot Hypersim metric model, the Eigen crop and 0.001–10 m. Most of its error is global scale:
+per-image scale alignment drops AbsRel from about 0.18 to 0.07.
 
 ## Setup
+**Local**
 ```bash
-conda env create -f environment.yml
-conda activate depth3d
-bash scripts/setup.sh        # upstream code (pinned), checkpoints, DA-2K, NYU .mat
+conda env create -f environment.yml && conda activate depth3d
+bash scripts/setup.sh        # code (pinned), checkpoints, DA-2K, iBims-1, NYU -> images, YOLO masks
+```
+Datasets go to `data/` unless `DATA_ROOT` is set. Re-running `setup.sh` skips finished steps.
+
+**Colab:** open [`colab/run_on_colab.ipynb`](colab/run_on_colab.ipynb) on a T4 runtime. The first session
+builds the data and saves `iad_data.tar` (~1.9 GB) to Google Drive; later sessions restore it in about a minute.
+Or build the tar locally with `bash scripts/pack_data.sh` and upload it to `MyDrive/instance-aware-depth/`.
+
+## Usage (run from `tools/`)
+```bash
+python infer.py path/to/image.png                  # depth png + .npy + coloured .ply -> results/infer/
+python eval_nyu.py --split val --gt filled         # tuning; --split test only for final numbers
+python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 ```
 
-## Usage
-```bash
-python tools/infer.py path/to/image.png      # depth png + .npy + coloured .ply in results/infer/
-python tools/eval_nyu.py                      # NYU test metrics -> results/nyu/
-python tools/eval_da2k.py                     # DA-2K accuracy per scene -> results/da2k/
-```
+## Data notes
+- NYU comes from the official labeled `.mat` (`tools/prepare_nyu.py`): 640×480 RGB, filled and raw depth (mm),
+  894-class labels, per-class instance ids, scene names.
+- The labeled RGB has a 6–8 px white border. The model only sees the region `[6:474, 7:632]`; feeding the border
+  costs about 0.03 AbsRel.
+- Validation is 92 images from 27 whole training scenes (`tools/make_val_split.py`, seed 0), so it shares
+  no scene with train or test.
 
 ## Repository layout
 ```
-tools/          our code (inference, evaluation; training to come)
-scripts/        setup
-data/splits/    NYU 795/654 split lists (data itself is downloaded, not committed)
+tools/          our code: data prep, masks, inference, evaluation (training to come)
+scripts/        setup.sh, pack_data.sh
+colab/          Colab notebook
+data/splits/    NYU split lists (data itself is downloaded, not committed)
 docs/           requirements checklist and plan
 results/        small CSV summaries of results
 ```
@@ -62,7 +81,7 @@ results/        small CSV summaries of results
 ## Datasets
 - NYU Depth V2 (labeled): https://cs.nyu.edu/~fergus/datasets/nyu_depth_v2.html
 - DA-2K: https://huggingface.co/datasets/depth-anything/DA-2K
-- iBims-1 (planned second dataset)
+- iBims-1: https://www.asg.ed.tum.de/lmf/ibims1/ (core set via rsync, see `scripts/setup.sh`)
 
 ## Team
 _Group name and members to be added._
