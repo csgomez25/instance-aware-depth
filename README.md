@@ -49,7 +49,8 @@ bash scripts/setup.sh        # code (pinned), checkpoints, DA-2K, iBims-1, NYU -
 ```
 Datasets go to `data/` unless `DATA_ROOT` is set. Re-running `setup.sh` skips finished steps.
 
-**Colab:** open [`colab/run_on_colab.ipynb`](colab/run_on_colab.ipynb) on a T4 runtime. The first session
+**Colab:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/csgomez25/instance-aware-depth/blob/main/colab/run_on_colab.ipynb)
+opens [`colab/run_on_colab.ipynb`](colab/run_on_colab.ipynb); pick a T4 runtime. The first session
 builds the data and saves `iad_data.tar` (~1.9 GB) to Google Drive; later sessions restore it in about a minute.
 Or build the tar locally with `bash scripts/pack_data.sh` and upload it to `MyDrive/instance-aware-depth/`.
 
