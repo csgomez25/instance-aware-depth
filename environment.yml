@@ -1,0 +1,18 @@
+name: depth3d
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu124
+      - torch==2.6.0
+      - torchvision==0.21.0
+      - opencv-python
+      - numpy
+      - matplotlib
+      - pandas
+      - tqdm
+      - h5py
+      - open3d==0.20.0
+      - ultralytics==8.4.216

@@ -1,0 +1,20 @@
+# Fetched by scripts/setup.sh
+Depth-Anything-V2/
+checkpoints/
+data/*
+!data/splits/
+
+# Large outputs; keep only small CSV summaries
+results/**/*.npy
+results/**/*.ply
+results/**/*.png
+results/**/*.jpg
+results/**/*_per_image.csv
+results/**/*_pairs.csv
+runs/
+*.pth
+*.pt
+
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
