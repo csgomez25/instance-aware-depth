@@ -35,10 +35,11 @@ from nyu_data import NYUDepth
 
 # Arguments that change the experiment; resuming with different values is refused.
 EXPERIMENT_KEYS = ["encoder", "train_gt", "epochs", "bs", "lr", "wd", "size", "min_depth", "max_depth",
-                   "model_max_depth", "seed", "masks", "amp", "train_split", "val_split"]
+                   "model_max_depth", "seed", "masks", "amp", "train_split", "val_split",
+                   "lambda_edge", "lambda_obj", "edge_offsets"]
 
 
-def parse_args():
+def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--name", required=True, help="run folder name under $RUNS_DIR")
     ap.add_argument("--encoder", default="vits")
@@ -52,13 +53,18 @@ def parse_args():
     ap.add_argument("--max-depth", type=float, default=10.0, help="loss ignores depth outside min..max (NYU: 10 m)")
     ap.add_argument("--model-max-depth", type=float, default=20.0, help="output range of the pretrained head (Hypersim: 20 m)")
     ap.add_argument("--masks", default=None, help="None, 'gt', or a mask folder such as 'yolo11s-seg'")
+    ap.add_argument("--lambda-edge", type=float, default=0.0, help="weight of the instance-edge step term (needs --masks)")
+    ap.add_argument("--lambda-obj", type=float, default=0.0, help="weight of the per-object scale-invariant term (needs --masks)")
+    ap.add_argument("--edge-offsets", type=int, nargs="+", default=[1, 3, 6], help="pixel offsets for edge pairs")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--no-amp", dest="amp", action="store_false", help="train in fp32")
     ap.add_argument("--train-split", default="train")
     ap.add_argument("--val-split", default="val")
     ap.add_argument("--workers", type=int, default=min(4, os.cpu_count() or 1))
     ap.add_argument("--max-steps", type=int, default=None, help="stop each epoch after N steps (smoke tests)")
-    return ap.parse_args()
+    args = ap.parse_args(argv)
+    args.defaults = {a.dest: a.default for a in ap._actions}
+    return args
 
 
 def seed_everything(seed):
@@ -78,11 +84,13 @@ def main():
     args = parse_args()
     run = C.RUNS / args.name
     run.mkdir(parents=True, exist_ok=True)
-    config = {k: v for k, v in vars(args).items() if k not in ("workers", "max_steps")}
+    config = {k: v for k, v in vars(args).items() if k not in ("workers", "max_steps", "defaults")}
     cfg_path = run / "config.json"
     if cfg_path.exists():
         old = json.loads(cfg_path.read_text())
-        changed = {k: (old.get(k), config[k]) for k in EXPERIMENT_KEYS if old.get(k) != config[k]}
+        # Settings added after a run started count as their default value.
+        changed = {k: (old.get(k, args.defaults[k]), config[k]) for k in EXPERIMENT_KEYS
+                   if old.get(k, args.defaults[k]) != config[k]}
         if changed:
             raise SystemExit(f"{run} already holds a run with different settings {changed}; pick a new --name")
     cfg_path.write_text(json.dumps(config, indent=2))
@@ -127,12 +135,13 @@ def main():
         return
 
     print(f"{args.name}: {len(train_set)} train / {len(val_ids)} val images, {steps_per_epoch} steps/epoch, "
-          f"bs {args.bs}, lr {args.lr:g}, target {args.train_gt}, amp {args.amp}, device {C.DEVICE}")
+          f"bs {args.bs}, lr {args.lr:g}, target {args.train_gt}, amp {args.amp}, device {C.DEVICE}, "
+          f"masks {args.masks}, lambda_edge {args.lambda_edge}, lambda_obj {args.lambda_obj}")
 
     for epoch in range(start_epoch, args.epochs):
         model.train()
         torch.cuda.reset_peak_memory_stats()
-        t0, losses, skipped = time.time(), [], 0
+        t0, losses, skipped, part_log = time.time(), [], 0, []
         for i, batch in enumerate(loader):
             if i >= steps_per_epoch:
                 break
@@ -149,9 +158,12 @@ def main():
                 skipped += 1
                 continue
             scaler.scale(loss).backward()
+            scale_before = scaler.get_scale()
             scaler.step(opt)
             scaler.update()
+            skipped += int(scaler.get_scale() < scale_before)  # fp16 overflow: scaler skipped this update
             losses.append(loss.item())
+            part_log.append(parts)
         train_time = time.time() - t0
 
         model.eval()
@@ -161,6 +173,8 @@ def main():
                "lr": lr, "skipped_steps": skipped, "train_s": round(train_time, 1),
                "val_s": round(time.time() - t1, 1),
                "peak_mem_gb": round(torch.cuda.max_memory_allocated() / 2 ** 30, 2) if C.DEVICE == "cuda" else 0}
+        if part_log:
+            row.update({f"train_{k}": round(float(v), 4) for k, v in pd.DataFrame(part_log).mean().items()})
         for gname, m in val.items():
             row.update({f"val_{gname}_{k}": round(v, 4) for k, v in m.items()})
         pd.DataFrame([row]).to_csv(log_path, mode="a", header=not log_path.exists(), index=False)

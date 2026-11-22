@@ -27,7 +27,8 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | Inference + point clouds, NYU eval, DA-2K eval | ✅ |
 | Fine-tuning script (`tools/train_nyu.py`), resumable, laptop + Colab | ✅ |
 | H1: baseline fine-tune, filled vs raw target | ⬜ |
-| Instance-aware loss, decoder change | ⬜ |
+| Instance-aware loss (`tools/losses.py`: edge-step + per-object terms) | ✅ |
+| Decoder change | ⬜ |
 | iBims-1 eval, boundary + flying-pixel metrics | ⬜ |
 | Experiments, paper, slides | ⬜ |
 
@@ -68,6 +69,7 @@ python eval_nyu.py --split val --gt filled         # tuning; --split test only f
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 
 python train_nyu.py --name h1_silog_filled --train-gt filled --bs 4 --epochs 20   # fine-tune -> runs/<name>/
+python train_nyu.py --name h2_both_yolo --masks yolo11s-seg --lambda-edge 0.5 --lambda-obj 0.5   # instance-aware loss
 python eval_nyu.py --split test --ckpt ../runs/h1_silog_filled/best.pth --tag h1_silog_filled
 ```
 Training follows the official Depth Anything V2 recipe (AdamW, decoder lr ×10, poly decay, 518×518 crops, flips)
