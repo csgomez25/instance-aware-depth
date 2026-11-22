@@ -50,9 +50,15 @@ bash scripts/setup.sh        # code (pinned), checkpoints, DA-2K, iBims-1, NYU -
 Datasets go to `data/` unless `DATA_ROOT` is set. Re-running `setup.sh` skips finished steps.
 
 **Colab:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/csgomez25/instance-aware-depth/blob/main/colab/run_on_colab.ipynb)
-opens [`colab/run_on_colab.ipynb`](colab/run_on_colab.ipynb); pick a T4 runtime. The first session
-builds the data and saves `iad_data.tar` (~1.9 GB) to Google Drive; later sessions restore it in about a minute.
-Or build the tar locally with `bash scripts/pack_data.sh` and upload it to `MyDrive/instance-aware-depth/`.
+opens [`colab/run_on_colab.ipynb`](colab/run_on_colab.ipynb); pick a T4 runtime.
+
+Data for Colab comes from a ~1.9 GB bundle, `iad_data.tar`:
+- **Teammates:** open the team's shared `iad_data.tar` in Google Drive ("Shared with me"), then right-click →
+  **Organize → Add shortcut → My Drive**. The notebook restores from it in about a minute. It is view-only:
+  you can read it but not change it, and your checkpoints and results go to your own `MyDrive/instance-aware-depth/`.
+- **No shortcut:** the first session downloads and prepares everything (~10 min) and saves your own copy.
+- **Bundle owner:** build it with `bash scripts/pack_data.sh`, upload to `MyDrive/instance-aware-depth/`,
+  and share the file (not the folder) as **Viewer**.
 
 ## Usage (run from `tools/`)
 ```bash
