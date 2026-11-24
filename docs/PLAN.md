@@ -68,5 +68,7 @@ Critical path: A → B → H1 → D → H2 → E → H4 → H5 → H6 → Result
    metrics. The edge term raises object-boundary F1 0.149 → 0.164 and cuts flying pixels 0.593 → 0.547; the object
    term adds nothing on boundaries. YOLO masks match GT masks. Next: λ_edge sweep (H2b: 0.25, 1, 2).
    Loading masks changes the random crops, so H2 compares against `h2_silog_yolo_l0` (masks loaded, λ = 0).
+   **Decided 2026-11-24 after H2b: λ_edge = 1, λ_obj = 0, YOLO masks** is the method for H4–H6. It sits in the
+   middle of the boundary plateau (λ 0.5–2) at +0.001 AbsRel; the object term is dropped (no boundary effect).
 4. If E fails: loss-only is the main method, E reported as a negative ablation.
 5. After H6: experiments frozen, only writing.

@@ -32,8 +32,10 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | H2b: λ_edge sweep (0, 0.25, 0.5, 1, 2) on the laptop | ✅ |
 | H3: lr × batch sweep (3 × 3) | ✅ |
 | Boundary + flying-pixel metrics (`tools/boundary.py`) | ✅ |
+| Method frozen: λ_edge = 1, λ_obj = 0, YOLO masks | ✅ |
+| iBims-1 loader + eval with official metrics (`tools/eval_ibims.py`), not run yet | ✅ |
 | Decoder change (H4) | ⬜ |
-| Seeds (H5), final test numbers (H6), iBims-1 eval | ⬜ |
+| Seeds (H5, queue ready: `runs/h5_queue.sh`), final test numbers (H6), iBims-1 results | ⬜ |
 | Paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
@@ -114,6 +116,7 @@ Data for Colab comes from a ~1.9 GB bundle, `iad_data.tar`:
 python infer.py path/to/image.png                  # depth png + .npy + coloured .ply -> results/infer/
 python eval_nyu.py --split val --gt filled         # tuning; --split test only for final numbers
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
+python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 
 python train_nyu.py --name h1_silog_filled --train-gt filled --bs 4 --epochs 20   # fine-tune -> runs/<name>/
 python train_nyu.py --name h2_both_yolo --masks yolo11s-seg --lambda-edge 0.5 --lambda-obj 0.5   # instance-aware loss

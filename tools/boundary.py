@@ -72,13 +72,14 @@ def flying_fraction(pred, gt, valid):
     return in_gap(pred)[band].mean()
 
 
-def boundary_metrics(pred, gt, valid, instances):
-    """pred, gt: HxW metres; valid: HxW bool; instances: HxW int ids. pred is median-scaled to gt first."""
+def boundary_metrics(pred, gt, valid, instances=None):
+    """pred, gt: HxW metres; valid: HxW bool; instances: HxW int ids, or None to skip bf1_obj.
+    pred is median-scaled to gt first."""
     pred = np.where(valid, pred, 1.0)
     gt = np.where(valid, gt, 1.0)
     pred = pred * np.median(gt[valid] / pred[valid])
-    return {
-        "bf1": boundary_f1(pred, gt, valid),
-        "bf1_obj": boundary_f1(pred, gt, valid, instance_crossings(instances)),
-        "flying": flying_fraction(pred, gt, valid),
-    }
+    out = {"bf1": boundary_f1(pred, gt, valid)}
+    if instances is not None:
+        out["bf1_obj"] = boundary_f1(pred, gt, valid, instance_crossings(instances))
+    out["flying"] = flying_fraction(pred, gt, valid)
+    return out
