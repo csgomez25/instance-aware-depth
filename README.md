@@ -29,7 +29,7 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | H1: baseline fine-tune, filled vs raw target (filled wins) | ✅ |
 | Instance-aware loss (`tools/losses.py`: edge-step + per-object terms) | ✅ |
 | H2: loss ablations + λ=0 control, YOLO vs GT masks | ✅ |
-| H2b: λ_edge sweep (0.25, 1, 2) | ⬜ |
+| H2b: λ_edge sweep (0, 0.25, 0.5, 1, 2) on the laptop | ✅ |
 | H3: lr × batch sweep (3 × 3) | ✅ |
 | Boundary + flying-pixel metrics (`tools/boundary.py`) | ✅ |
 | Decoder change (H4) | ⬜ |
@@ -65,6 +65,19 @@ in the point cloud). Ground truth is filled depth.
 
 Fine-tuning halves AbsRel but blurs object boundaries (bf1_obj 0.233 → 0.149). The edge term wins back part of that
 at no AbsRel cost; the object term does not act on boundaries; YOLO masks match GT masks.
+
+**H2b, edge-loss weight** (laptop, λ_obj 0, YOLO masks, own λ=0 control; `results/h2b_val.csv`)
+
+| λ_edge | AbsRel ↓ | AbsRel, last 5 ↓ | bf1 ↑ | bf1_obj ↑ | flying ↓ |
+|---|---|---|---|---|---|
+| 0 | 0.0885 | 0.0900 | 0.119 | 0.150 | 0.588 |
+| 0.25 | **0.0881** | **0.0900** | 0.128 | 0.159 | 0.574 |
+| 0.5 | 0.0887 | 0.0903 | 0.129 | 0.159 | 0.553 |
+| 1.0 | 0.0891 | 0.0910 | 0.130 | 0.155 | 0.556 |
+| 2.0 | 0.0897 | 0.0912 | **0.133** | **0.160** | **0.546** |
+
+The λ=0.5 gain repeats on a second machine (Colab: bf1_obj +0.015, flying −0.047; laptop: +0.008, −0.034).
+Raising λ trades a little AbsRel (+0.001 at λ=2) for sharper boundaries and fewer flying pixels.
 
 **H3, lr × batch on SiLog** (laptop RTX A3000, filled target; `results/h3_val.csv`). Val AbsRel, mean of last 5 epochs:
 
