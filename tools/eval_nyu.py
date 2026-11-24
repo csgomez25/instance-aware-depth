@@ -3,6 +3,7 @@
     python tools/eval_nyu.py [--split test|val] [--gt filled|raw] [--ckpt path] [--tag name] [--limit N]
 
 Writes results/nyu/<tag>_<split>_<gt>_per_image.csv and appends a summary row to results/nyu/summary.csv.
+Boundary metrics (bf1, bf1_obj, flying; see boundary.py) always use the filled depth.
 Use --split val while tuning; the test split is for final numbers only.
 """
 import argparse
@@ -15,6 +16,7 @@ import torch
 from tqdm import tqdm
 
 import common as C
+from boundary import boundary_metrics
 
 
 def metrics(pred, gt):
@@ -80,8 +82,10 @@ def main():
         ms = (time.perf_counter() - t0) * 1000
 
         valid = eval_mask(gt)
-        p = np.clip(pred[valid], 1e-3, 10)
-        rows.append({"image": img_id, "ms": ms, **metrics(p, gt[valid])})
+        p = np.clip(pred, 1e-3, 10)
+        filled = gt if args.gt == "filled" else C.read_nyu_depth(img_id, "filled")
+        rows.append({"image": img_id, "ms": ms, **metrics(p[valid], gt[valid]),
+                     **boundary_metrics(p, filled, eval_mask(filled), C.read_nyu_instances(img_id))})
 
     df = pd.DataFrame(rows)
     out = C.RESULTS / "nyu"

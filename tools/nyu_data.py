@@ -43,12 +43,9 @@ class NYUDepth(Dataset):
     def _instances(self, img_id):
         if self.masks is None:
             return None
-        read = lambda sub: cv2.imread(str(C.NYU_DIR / sub / f"{img_id}.png"), cv2.IMREAD_UNCHANGED)
         if self.masks == "gt":
-            label, inst = read("labels").astype(np.int32), read("instances").astype(np.int32)
-            ids = np.where(label > 0, label * 256 + inst, 0)  # unique per (class, instance)
-            return np.unique(ids, return_inverse=True)[1].reshape(ids.shape).astype(np.int32)
-        return read(self.masks).astype(np.int32)
+            return C.read_nyu_instances(img_id)
+        return cv2.imread(str(C.NYU_DIR / self.masks / f"{img_id}.png"), cv2.IMREAD_UNCHANGED).astype(np.int32)
 
     def __getitem__(self, i):
         img_id = self.ids[i]

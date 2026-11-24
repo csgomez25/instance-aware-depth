@@ -83,6 +83,14 @@ def read_nyu_depth(img_id, kind="filled"):
     return d.astype(np.float32) / NYU_DEPTH_SCALE
 
 
+def read_nyu_instances(img_id):
+    """NYU ground-truth object map, 480x640 int32: 0 = unlabelled, then one id per (class, instance)."""
+    read = lambda sub: cv2.imread(str(NYU_DIR / sub / f"{img_id}.png"), cv2.IMREAD_UNCHANGED).astype(np.int32)
+    label, inst = read("labels"), read("instances")
+    ids = np.where(label > 0, label * 256 + inst, 0)
+    return np.unique(ids, return_inverse=True)[1].reshape(ids.shape).astype(np.int32)
+
+
 def predict_nyu(model, bgr):
     """Run the model on the border-free region of a 640x480 NYU image; returns a 480x640 map (0 on the border)."""
     t, b, l, r = NYU_VALID_CROP
