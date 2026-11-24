@@ -1,0 +1,9 @@
+run,lambda_edge,lambda_obj,masks,machine,best_val_abs_rel,last5_val_abs_rel,last5_val_d1,abs_rel,d1,bf1,bf1_obj,flying
+pretrained_hypersim_vits,,,,laptop,,,,0.1975,0.7191,0.1918,0.2333,0.4721
+h1_silog_filled,0,0,none,colab,0.0889,0.0910,0.9309,0.0889,0.9335,0.1196,0.1506,0.5915
+h2_silog_yolo_l0,0,0,yolo11s-seg,colab,0.0889,0.0914,0.9304,0.0889,0.9334,0.1186,0.1491,0.5932
+h2_edge_yolo_l0.5,0.5,0,yolo11s-seg,colab,0.0903,0.0919,0.9303,0.0903,0.9302,0.1344,0.1639,0.5466
+h2_obj_yolo_l0.5,0,0.5,yolo11s-seg,colab,0.0882,0.0911,0.9325,0.0882,0.9328,0.1153,0.1478,0.5866
+h2_both_yolo_l0.5,0.5,0.5,yolo11s-seg,colab,0.0895,0.0911,0.9329,0.0895,0.9317,0.1358,0.1675,0.5542
+h2_both_gt_l0.5,0.5,0.5,gt,colab,0.0893,0.0917,0.9308,0.0893,0.9309,0.1359,0.1678,0.5680
+h1_silog_raw,0,0,none,colab,0.0914,0.0944,0.9256,,,,,

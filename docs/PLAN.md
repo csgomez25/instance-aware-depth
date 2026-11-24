@@ -60,7 +60,13 @@ Critical path: A → B → H1 → D → H2 → E → H4 → H5 → H6 → Result
 
 ## Decision points
 1. After H1: raw or filled training target for all later runs.
+   **Decided 2026-11-23: filled** (val AbsRel, mean of last 5 epochs: 0.0910 filled vs 0.0944 raw).
 2. After the T4 benchmark: swap machine roles if the T4 is much slower.
+   **Outcome: the T4 is about 2x faster** than the throttled laptop (46 s vs 92 s per epoch at bs 4).
 3. After H2: keep the best λ and go to E; if flat, judge on boundary metrics, consider dropping the scale term.
+   **Outcome 2026-11-23:** AbsRel is flat (all within ±0.0005 of the λ=0 control), so H2 is judged on boundary
+   metrics. The edge term raises object-boundary F1 0.149 → 0.164 and cuts flying pixels 0.593 → 0.547; the object
+   term adds nothing on boundaries. YOLO masks match GT masks. Next: λ_edge sweep (H2b: 0.25, 1, 2).
+   Loading masks changes the random crops, so H2 compares against `h2_silog_yolo_l0` (masks loaded, λ = 0).
 4. If E fails: loss-only is the main method, E reported as a negative ablation.
 5. After H6: experiments frozen, only writing.

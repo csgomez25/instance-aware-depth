@@ -26,11 +26,15 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | iBims-1 downloaded | ✅ |
 | Inference + point clouds, NYU eval, DA-2K eval | ✅ |
 | Fine-tuning script (`tools/train_nyu.py`), resumable, laptop + Colab | ✅ |
-| H1: baseline fine-tune, filled vs raw target | ⬜ |
+| H1: baseline fine-tune, filled vs raw target (filled wins) | ✅ |
 | Instance-aware loss (`tools/losses.py`: edge-step + per-object terms) | ✅ |
-| Decoder change | ⬜ |
-| iBims-1 eval, boundary + flying-pixel metrics | ⬜ |
-| Experiments, paper, slides | ⬜ |
+| H2: loss ablations + λ=0 control, YOLO vs GT masks | ✅ |
+| H2b: λ_edge sweep (0.25, 1, 2) | ⬜ |
+| H3: lr × batch sweep (3 × 3) | ✅ |
+| Boundary + flying-pixel metrics (`tools/boundary.py`) | ✅ |
+| Decoder change (H4) | ⬜ |
+| Seeds (H5), final test numbers (H6), iBims-1 eval | ⬜ |
+| Paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
 | Benchmark | AbsRel | RMSE (m) | δ1 |
@@ -42,6 +46,36 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 
 NYU uses the zero-shot Hypersim metric model, the Eigen crop and 0.001–10 m. Most of its error is global scale:
 per-image scale alignment drops AbsRel from about 0.18 to 0.07.
+
+## Fine-tuning results so far (NYU val, 92 images, one seed)
+Boundary metrics (`tools/boundary.py`): `bf1` is the scale-invariant depth-boundary F1 of Depth Pro, `bf1_obj` the
+same at object boundaries only, `flying` the share of pixels at depth jumps predicted in the gap (points that float
+in the point cloud). Ground truth is filled depth.
+
+**H2, instance-aware loss** (Colab T4, bs 4, lr 5e-6, filled target; `results/h2_val.csv`)
+
+| Run | λ_edge | λ_obj | Masks | AbsRel ↓ | AbsRel, last 5 ↓ | bf1_obj ↑ | flying ↓ |
+|---|---|---|---|---|---|---|---|
+| Zero-shot | – | – | – | 0.1975 | – | 0.233 | 0.472 |
+| `h2_silog_yolo_l0` (control) | 0 | 0 | YOLO | 0.0889 | 0.0914 | 0.149 | 0.593 |
+| `h2_edge_yolo_l0.5` | 0.5 | 0 | YOLO | 0.0903 | 0.0919 | 0.164 | **0.547** |
+| `h2_obj_yolo_l0.5` | 0 | 0.5 | YOLO | **0.0882** | 0.0911 | 0.148 | 0.587 |
+| `h2_both_yolo_l0.5` | 0.5 | 0.5 | YOLO | 0.0895 | 0.0911 | **0.168** | 0.554 |
+| `h2_both_gt_l0.5` | 0.5 | 0.5 | GT | 0.0893 | 0.0917 | **0.168** | 0.568 |
+
+Fine-tuning halves AbsRel but blurs object boundaries (bf1_obj 0.233 → 0.149). The edge term wins back part of that
+at no AbsRel cost; the object term does not act on boundaries; YOLO masks match GT masks.
+
+**H3, lr × batch on SiLog** (laptop RTX A3000, filled target; `results/h3_val.csv`). Val AbsRel, mean of last 5 epochs:
+
+| lr \ batch | 2 | 4 | 8 |
+|---|---|---|---|
+| 2e-6 | 0.0914 | 0.0910 | 0.0931 |
+| 5e-6 | 0.0941 | **0.0902** | **0.0902** |
+| 1e-5 | 0.0974 | 0.0948 | 0.0920 |
+
+lr 5e-6 (the official recipe) is best; at high lr a larger batch matters most. Across the nine settings, bf1_obj
+ranges 0.149–0.160 and flying 0.572–0.606.
 
 ## Setup
 **Local**
