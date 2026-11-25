@@ -41,16 +41,22 @@ def eval_mask(gt):
 
 
 @torch.no_grad()
-def evaluate(model, ids, gts=("filled", "raw")):
-    """Mean metrics over `ids` for each ground-truth kind, one prediction per image (same protocol as main())."""
+def evaluate(model, ids, gts=("filled", "raw"), masks=None):
+    """Mean metrics over `ids` for each ground-truth kind, one prediction per image (same protocol as main()).
+    masks: instance-mask source for the decoder variant (see common.read_nyu_masks); ignored by other models."""
     rows = {g: [] for g in gts}
     for img_id in ids:
-        pred = C.predict_nyu(model, cv2.imread(str(C.nyu_rgb_path(img_id))))
+        pred = C.predict_nyu(model, cv2.imread(str(C.nyu_rgb_path(img_id))), model_masks(model, img_id, masks))
         for g in gts:
             gt = C.read_nyu_depth(img_id, g)
             valid = eval_mask(gt)
             rows[g].append(metrics(np.clip(pred[valid], 1e-3, 10), gt[valid]))
     return {g: pd.DataFrame(r).mean().to_dict() for g, r in rows.items()}
+
+
+def model_masks(model, img_id, masks):
+    """The instance map the model takes as input, or None for models that take only the image."""
+    return C.read_nyu_masks(img_id, masks) if getattr(model, "needs_instances", False) else None
 
 
 def main():
@@ -62,21 +68,23 @@ def main():
     ap.add_argument("--max-depth", type=float, default=20.0)
     ap.add_argument("--tag", default="pretrained_hypersim_vits")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--masks", default="yolo11s-seg", help="mask input of the decoder variant: 'gt' or a mask folder")
     args = ap.parse_args()
 
     model = C.load_metric(args.encoder, args.max_depth, args.ckpt)
     ids = C.read_split(args.split)[: args.limit]
     rows = []
 
-    C.predict_nyu(model, cv2.imread(str(C.nyu_rgb_path(ids[0]))))  # warm-up (cuDNN autotune)
+    C.predict_nyu(model, cv2.imread(str(C.nyu_rgb_path(ids[0]))), model_masks(model, ids[0], args.masks))  # warm-up (cuDNN autotune)
 
     for img_id in tqdm(ids):
         bgr = cv2.imread(str(C.nyu_rgb_path(img_id)))
         gt = C.read_nyu_depth(img_id, args.gt)
+        inst = model_masks(model, img_id, args.masks)
         if C.DEVICE == "cuda":
             torch.cuda.synchronize()
         t0 = time.perf_counter()
-        pred = C.predict_nyu(model, bgr)
+        pred = C.predict_nyu(model, bgr, inst)
         if C.DEVICE == "cuda":
             torch.cuda.synchronize()
         ms = (time.perf_counter() - t0) * 1000

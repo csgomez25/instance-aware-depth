@@ -34,8 +34,9 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | Boundary + flying-pixel metrics (`tools/boundary.py`) | ✅ |
 | Method frozen: λ_edge = 1, λ_obj = 0, YOLO masks | ✅ |
 | iBims-1 loader + eval with official metrics (`tools/eval_ibims.py`), not run yet | ✅ |
-| Decoder change (H4) | ⬜ |
-| Seeds (H5, queue ready: `runs/h5_queue.sh`), final test numbers (H6), iBims-1 results | ⬜ |
+| Decoder change (`tools/edge_decoder.py`, `--decoder-edges`), Colab cell ready; H4 runs not done | 🟡 |
+| Seeds (H5, running on the laptop: `runs/h5_queue.sh`) | 🟡 |
+| Final test numbers (H6), iBims-1 results | ⬜ |
 | Paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
@@ -120,8 +121,11 @@ python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-
 
 python train_nyu.py --name h1_silog_filled --train-gt filled --bs 4 --epochs 20   # fine-tune -> runs/<name>/
 python train_nyu.py --name h2_both_yolo --masks yolo11s-seg --lambda-edge 0.5 --lambda-obj 0.5   # instance-aware loss
+python train_nyu.py --name h4_dec_yolo_l1.0 --masks yolo11s-seg --decoder-edges --lambda-edge 1   # decoder variant
 python eval_nyu.py --split test --ckpt ../runs/h1_silog_filled/best.pth --tag h1_silog_filled
 ```
+Decoder-variant checkpoints are recognised automatically and take instance masks at test time: NYU eval reads
+`--masks` (default `yolo11s-seg`), iBims-1 eval runs YOLO11s-seg on each image.
 Training follows the official Depth Anything V2 recipe (AdamW, decoder lr ×10, poly decay, 518×518 crops, flips)
 with fp16 and memory-efficient attention so it fits one GPU (batch 4 ≈ 2 GB, batch 8 ≈ 3.4 GB).
 The best epoch is chosen on the val split. Each run writes `config.json`, `log.csv` and `best.pth`;

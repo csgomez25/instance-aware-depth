@@ -44,13 +44,20 @@ def main():
     ap.add_argument("--max-eval-depth", type=float, default=10.0)
     ap.add_argument("--tag", default="pretrained_hypersim_vits")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--yolo", default="yolo11s-seg.pt", help="mask model for the decoder variant")
     args = ap.parse_args()
 
     model = C.load_metric(args.encoder, args.max_depth, args.ckpt)
+    if getattr(model, "needs_instances", False):  # decoder variant: iBims has no instance labels, so run YOLO
+        from make_masks import load_yolo, yolo_instances
+        yolo = load_yolo(args.yolo)
+        predict = lambda bgr: model.infer_image(bgr, yolo_instances(yolo, bgr))
+    else:
+        predict = model.infer_image
     rows, planes = [], []
     for name in tqdm(ibims_names()[: args.limit]):
         s = read_ibims(name)
-        row, p = evaluate_sample(s, model.infer_image(s.bgr), args.max_eval_depth)
+        row, p = evaluate_sample(s, predict(s.bgr), args.max_eval_depth)
         rows.append({**row, "n_planes": sum(not np.isnan(f) for f, _ in p)})
         planes += p
 

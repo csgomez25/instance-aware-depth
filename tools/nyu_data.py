@@ -40,22 +40,14 @@ class NYUDepth(Dataset):
     def __len__(self):
         return len(self.ids)
 
-    def _instances(self, img_id):
-        if self.masks is None:
-            return None
-        if self.masks == "gt":
-            return C.read_nyu_instances(img_id)
-        return cv2.imread(str(C.NYU_DIR / self.masks / f"{img_id}.png"), cv2.IMREAD_UNCHANGED).astype(np.int32)
-
     def __getitem__(self, i):
         img_id = self.ids[i]
         t, b, l, r = C.NYU_VALID_CROP
         rgb = cv2.cvtColor(cv2.imread(str(C.nyu_rgb_path(img_id))), cv2.COLOR_BGR2RGB)[t:b, l:r]
         maps = {"depth_filled": C.read_nyu_depth(img_id, "filled")[t:b, l:r],
                 "depth_raw": C.read_nyu_depth(img_id, "raw")[t:b, l:r]}
-        inst = self._instances(img_id)
-        if inst is not None:
-            maps["instances"] = inst[t:b, l:r]
+        if self.masks is not None:
+            maps["instances"] = C.read_nyu_masks(img_id, self.masks)[t:b, l:r]
 
         h, w = resized_shape(*rgb.shape[:2], short=self.size)
         rgb = cv2.resize(rgb, (w, h), interpolation=cv2.INTER_CUBIC)

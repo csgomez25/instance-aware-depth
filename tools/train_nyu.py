@@ -36,7 +36,7 @@ from nyu_data import NYUDepth
 # Arguments that change the experiment; resuming with different values is refused.
 EXPERIMENT_KEYS = ["encoder", "train_gt", "epochs", "bs", "lr", "wd", "size", "min_depth", "max_depth",
                    "model_max_depth", "seed", "masks", "amp", "train_split", "val_split",
-                   "lambda_edge", "lambda_obj", "edge_offsets"]
+                   "lambda_edge", "lambda_obj", "edge_offsets", "decoder_edges"]
 
 
 def parse_args(argv=None):
@@ -56,6 +56,8 @@ def parse_args(argv=None):
     ap.add_argument("--lambda-edge", type=float, default=0.0, help="weight of the instance-edge step term (needs --masks)")
     ap.add_argument("--lambda-obj", type=float, default=0.0, help="weight of the per-object scale-invariant term (needs --masks)")
     ap.add_argument("--edge-offsets", type=int, nargs="+", default=[1, 3, 6], help="pixel offsets for edge pairs")
+    ap.add_argument("--decoder-edges", action="store_true",
+                    help="H4 decoder variant: mask-edge map as extra decoder input (edge_decoder.py; needs --masks)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--no-amp", dest="amp", action="store_false", help="train in fp32")
     ap.add_argument("--train-split", default="train")
@@ -64,6 +66,8 @@ def parse_args(argv=None):
     ap.add_argument("--max-steps", type=int, default=None, help="stop each epoch after N steps (smoke tests)")
     args = ap.parse_args(argv)
     args.defaults = {a.dest: a.default for a in ap._actions}
+    if args.decoder_edges and not args.masks:
+        ap.error("--decoder-edges needs --masks")
     return args
 
 
@@ -96,7 +100,7 @@ def main():
     cfg_path.write_text(json.dumps(config, indent=2))
     seed_everything(args.seed)
 
-    model = C.load_metric(args.encoder, args.model_max_depth)
+    model = C.load_metric(args.encoder, args.model_max_depth, edge_decoder=args.decoder_edges)
     use_memory_efficient_attention()
     loss_fn = build_loss(args)
 
@@ -136,7 +140,8 @@ def main():
 
     print(f"{args.name}: {len(train_set)} train / {len(val_ids)} val images, {steps_per_epoch} steps/epoch, "
           f"bs {args.bs}, lr {args.lr:g}, target {args.train_gt}, amp {args.amp}, device {C.DEVICE}, "
-          f"masks {args.masks}, lambda_edge {args.lambda_edge}, lambda_obj {args.lambda_obj}")
+          f"masks {args.masks}, lambda_edge {args.lambda_edge}, lambda_obj {args.lambda_obj}, "
+          f"decoder_edges {args.decoder_edges}")
 
     for epoch in range(start_epoch, args.epochs):
         model.train()
@@ -151,7 +156,7 @@ def main():
 
             batch = {k: v.to(C.DEVICE, non_blocking=True) if torch.is_tensor(v) else v for k, v in batch.items()}
             with torch.autocast("cuda", dtype=torch.float16, enabled=args.amp):
-                pred = model(batch["image"])
+                pred = model(batch["image"], batch["instances"]) if args.decoder_edges else model(batch["image"])
             loss, parts = loss_fn(pred, batch)
             opt.zero_grad(set_to_none=True)
             if not torch.isfinite(loss):
@@ -168,7 +173,7 @@ def main():
 
         model.eval()
         t1 = time.time()
-        val = evaluate(model, val_ids)
+        val = evaluate(model, val_ids, masks=args.masks)
         row = {"epoch": epoch + 1, "train_loss": float(np.mean(losses)) if losses else float("nan"),
                "lr": lr, "skipped_steps": skipped, "train_s": round(train_time, 1),
                "val_s": round(time.time() - t1, 1),

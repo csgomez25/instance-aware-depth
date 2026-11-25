@@ -59,12 +59,20 @@ def load_relative(encoder="vits"):
     return model.to(DEVICE).eval()
 
 
-def load_metric(encoder="vits", max_depth=20.0, ckpt=None):
-    DepthAnythingV2 = _import_dpt(metric=True)
-    model = DepthAnythingV2(**{**MODEL_CONFIGS[encoder], "max_depth": max_depth})
+def load_metric(encoder="vits", max_depth=20.0, ckpt=None, edge_decoder=False):
+    """Metric model from `ckpt` (default: pretrained Hypersim). A checkpoint with `edge_branch.*` weights, or
+    edge_decoder=True, gives the H4 decoder variant (edge_decoder.py), whose forward also takes instance masks."""
     path = ckpt or CKPT / f"depth_anything_v2_metric_hypersim_{encoder}.pth"
     state = torch.load(path, map_location="cpu")
-    model.load_state_dict(state.get("model", state))
+    state = state.get("model", state)
+    if edge_decoder or any(k.startswith("edge_branch.") for k in state):
+        from edge_decoder import EdgeDepthAnythingV2 as Model
+    else:
+        Model = _import_dpt(metric=True)
+    model = Model(**{**MODEL_CONFIGS[encoder], "max_depth": max_depth})
+    missing, unexpected = model.load_state_dict(state, strict=False)
+    if unexpected or any(not k.startswith("edge_branch.") for k in missing):
+        raise RuntimeError(f"{path}: missing {missing}, unexpected {unexpected}")
     return model.to(DEVICE).eval()
 
 
@@ -91,11 +99,20 @@ def read_nyu_instances(img_id):
     return np.unique(ids, return_inverse=True)[1].reshape(ids.shape).astype(np.int32)
 
 
-def predict_nyu(model, bgr):
-    """Run the model on the border-free region of a 640x480 NYU image; returns a 480x640 map (0 on the border)."""
+def read_nyu_masks(img_id, masks):
+    """Instance map, 480x640 int32: masks='gt' for NYU's own instances, else a mask folder such as 'yolo11s-seg'."""
+    if masks == "gt":
+        return read_nyu_instances(img_id)
+    return cv2.imread(str(NYU_DIR / masks / f"{img_id}.png"), cv2.IMREAD_UNCHANGED).astype(np.int32)
+
+
+def predict_nyu(model, bgr, inst=None):
+    """Run the model on the border-free region of a 640x480 NYU image; returns a 480x640 map (0 on the border).
+    inst: 480x640 instance map, required by the decoder variant (model.needs_instances)."""
     t, b, l, r = NYU_VALID_CROP
     pred = np.zeros(bgr.shape[:2], np.float32)
-    pred[t:b, l:r] = model.infer_image(bgr[t:b, l:r])
+    crop = bgr[t:b, l:r]
+    pred[t:b, l:r] = model.infer_image(crop) if inst is None else model.infer_image(crop, inst[t:b, l:r])
     return pred
 
 
