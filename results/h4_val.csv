@@ -1,0 +1,5 @@
+run,decoder_edges,lambda_edge,best_epoch,best_val_abs_rel,last5_val_abs_rel,d1,bf1,bf1_obj,flying
+h2_silog_yolo_l0,False,0.0,15,0.0889,0.0914,0.9334,0.1186,0.1491,0.5932
+h2_edge_yolo_l1.0,False,1.0,15,0.0902,0.0924,0.9294,0.1301,0.1605,0.5458
+h4_dec_yolo_l0,True,0.0,15,0.0891,0.0914,0.9330,0.1190,0.1495,0.5927
+h4_dec_yolo_l1.0,True,1.0,17,0.0906,0.0921,0.9304,0.1306,0.1609,0.5574
