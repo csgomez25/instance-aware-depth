@@ -1,16 +1,17 @@
-# Instance-Aware Depth for Single-Image 3D Reconstruction
+# RGB-D Scene: Instance-Aware Depth for Single-Image Indoor 3D Scene Parsing
 
-ECE 4990 Computer Vision final project, Cal Poly Pomona, Fall 2026.
+**Group RGB-D Scene.** ECE 4990 Computer Vision final project, Cal Poly Pomona, Fall 2026.
 
-We fine-tune **[Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2)** (Small) on
-**NYU Depth V2** with an **instance-aware loss**: object masks from YOLO11-seg guide where depth has to be
-sharp (object boundaries) and keep each object's depth consistent. Sharper boundaries mean fewer
-"flying pixels" when the depth map is lifted to a 3D point cloud.
+From one RGB photo of a room we build a **labeled 3D scene**: every object and person becomes its own 3D point
+cloud with a position and distance. Depth comes from **[Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2)**
+(Small), fine-tuned on **NYU Depth V2** with an **instance-aware loss**: YOLO11-seg object masks mark where depth
+has to break cleanly, which cuts the "flying pixels" that smear objects into the background in 3D. The same masks
+then split the 3D scene into objects.
 
 ```
-RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point cloud (.ply)
-     │                ▲
-     └─► YOLO11-seg ──┘  masks → instance-aware loss (training) / edge input (decoder variant)
+RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric depth  (RGB + D = RGB-D)
+     │                    ▲ training only                         │
+     └─► YOLO11-seg ──────┴── instance masks + classes ───────────┴──► labeled 3D scene (.ply + per-object .json)
 ```
 
 - Requirements checklist: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
@@ -37,6 +38,9 @@ RGB image ──► Depth Anything V2 ──► metric depth ──► 3D point 
 | H4: decoder change (`tools/edge_decoder.py`, `--decoder-edges`): no effect, negative ablation | ✅ |
 | H5: 3 seeds of control and method | ✅ |
 | iBims-1 zero-shot results (seed 0, Colab) | ✅ |
+| Labeled 3D scene (`tools/scene.py`): objects and people as separate point clouds with distance and size | ✅ |
+| Flying pixels per object class (`tools/flying_by_class.py`) | ✅ |
+| Novel-view renders, person tracking video demo | ⬜ |
 | Final test numbers (H6) | ⬜ |
 | Paper, slides | ⬜ |
 
@@ -130,6 +134,21 @@ The mask-edge decoder input changes nothing; the decoder-only run ends at the co
 NYU fine-tuning improves metric depth on unseen rooms but costs most of the boundary quality; the edge loss recovers
 some flying pixels, not boundary F1.
 
+**Flying pixels per object class** (NYU val, YOLO11s-seg classes, 3 seeds pooled per group;
+`results/nyu/flying_by_class_val.csv`). Lower is better.
+
+| Class | Objects | Zero-shot | Control | Edge loss (λ 1) |
+|---|---|---|---|---|
+| Background | – | 0.468 | 0.596 | 0.581 |
+| Chair | 146 | 0.492 | 0.627 | 0.596 |
+| Dining table | 31 | 0.492 | 0.611 | 0.594 |
+| Bed | 26 | 0.415 | 0.621 | **0.520** |
+| Person | 40 | 0.452 | 0.655 | 0.682 |
+| Couch | 21 | 0.485 | 0.527 | 0.501 |
+
+The edge loss helps furniture most (bed −0.10). People are the class that fine-tuning damages most, and the edge
+loss does not help them: NYU has few people to learn from.
+
 ## Setup
 **Local**
 ```bash
@@ -153,6 +172,9 @@ Data for Colab comes from a ~1.9 GB bundle, `iad_data.tar`:
 ```bash
 python infer.py path/to/image.png                  # depth png + .npy + coloured .ply -> results/infer/
 python eval_nyu.py --split val --gt filled         # tuning; --split test only for final numbers
+python scene.py 000500 --ckpt ../runs/<run>/best.pth   # labeled 3D scene: .ply (photo + per-object colours), objects .json, overview .png -> results/scene/
+python scene.py room.jpg                               # any photo; YOLO11s-seg finds the objects and people
+python flying_by_class.py --split val --group zero-shot=zero-shot --group method=<run>,<run>   # flying pixels per class
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 
@@ -193,7 +215,7 @@ results/        small CSV summaries of results
 - iBims-1: https://www.asg.ed.tum.de/lmf/ibims1/ (core set via rsync, see `scripts/setup.sh`)
 
 ## Team
-_Group name and members to be added._
+**RGB-D Scene**. Members: _to be added._
 
 ## Acknowledgements
 Built on Depth Anything V2 (Yang et al., NeurIPS 2024) and Ultralytics YOLO11.

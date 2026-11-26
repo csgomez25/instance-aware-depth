@@ -60,24 +60,33 @@ def instance_crossings(instances):
     return instances[:, 1:] != instances[:, :-1], instances[1:] != instances[:-1]
 
 
-def flying_fraction(pred, gt, valid):
+def flying_maps(pred, gt, valid):
+    """(band, flying): HxW bool maps of the pixels scored by `flying` and of those predicted in the gap."""
     kernel = np.ones((FLY_WINDOW, FLY_WINDOW), np.uint8)
     near = cv2.erode(np.where(valid, gt, 1e6).astype(np.float32), kernel)
     far = cv2.dilate(np.where(valid, gt, 0).astype(np.float32), kernel)
     in_gap = lambda d: (d > FLY_TOL * near) & (d < far / FLY_TOL)
     # GT pixels that are themselves between the surfaces (slopes, hole filling) have no right answer here
     band = valid & (far > FLY_JUMP * near) & ~in_gap(gt)
-    if not band.any():
-        return np.nan
-    return in_gap(pred)[band].mean()
+    return band, band & in_gap(pred)
+
+
+def flying_fraction(pred, gt, valid):
+    band, flying = flying_maps(pred, gt, valid)
+    return flying.sum() / band.sum() if band.any() else np.nan
+
+
+def median_scaled(pred, gt, valid):
+    """pred and gt with invalid pixels set to 1, pred median-scaled to gt (what every boundary metric scores)."""
+    pred = np.where(valid, pred, 1.0)
+    gt = np.where(valid, gt, 1.0)
+    return pred * np.median(gt[valid] / pred[valid]), gt
 
 
 def boundary_metrics(pred, gt, valid, instances=None):
     """pred, gt: HxW metres; valid: HxW bool; instances: HxW int ids, or None to skip bf1_obj.
     pred is median-scaled to gt first."""
-    pred = np.where(valid, pred, 1.0)
-    gt = np.where(valid, gt, 1.0)
-    pred = pred * np.median(gt[valid] / pred[valid])
+    pred, gt = median_scaled(pred, gt, valid)
     out = {"bf1": boundary_f1(pred, gt, valid)}
     if instances is not None:
         out["bf1_obj"] = boundary_f1(pred, gt, valid, instance_crossings(instances))

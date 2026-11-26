@@ -1,0 +1,94 @@
+class,group,objects,band_px,flying_px,flying
+background,control,0,796401,474826,0.5962
+background,method,0,796401,463060,0.5814
+chair,control,146,329214,206342,0.6268
+chair,method,146,329214,196280,0.5962
+background,zero-shot,0,265467,124107,0.4675
+chair,zero-shot,146,109738,53964,0.4918
+dining table,control,31,107619,65750,0.611
+dining table,method,31,107619,63965,0.5944
+bed,control,26,74280,46116,0.6208
+bed,method,26,74280,38651,0.5203
+person,control,40,57780,37839,0.6549
+person,method,40,57780,39409,0.6821
+couch,control,21,49743,26198,0.5267
+couch,method,21,49743,24916,0.5009
+dining table,zero-shot,31,35873,17641,0.4918
+bed,zero-shot,26,24760,10269,0.4147
+person,zero-shot,40,19260,8696,0.4515
+potted plant,control,13,19122,11347,0.5934
+potted plant,method,13,19122,11198,0.5856
+couch,zero-shot,21,16581,8035,0.4846
+refrigerator,control,9,14382,8507,0.5915
+refrigerator,method,9,14382,8113,0.5641
+oven,control,12,9609,5306,0.5522
+oven,method,12,9609,5362,0.558
+tv,control,29,9516,6138,0.645
+tv,method,29,9516,6299,0.6619
+suitcase,control,6,7842,5875,0.7492
+suitcase,method,6,7842,5664,0.7223
+book,control,25,7164,3801,0.5306
+book,method,25,7164,3628,0.5064
+bowl,control,25,7026,5578,0.7939
+bowl,method,25,7026,5223,0.7434
+sink,control,12,6909,4207,0.6089
+sink,method,12,6909,3881,0.5617
+potted plant,zero-shot,13,6374,3234,0.5074
+bottle,control,38,6357,3032,0.477
+bottle,method,38,6357,3200,0.5034
+cup,control,19,5067,3230,0.6375
+cup,method,19,5067,3375,0.6661
+refrigerator,zero-shot,9,4794,1686,0.3517
+keyboard,control,8,4431,2200,0.4965
+keyboard,method,8,4431,2417,0.5455
+oven,zero-shot,12,3203,1589,0.4961
+tv,zero-shot,29,3172,1756,0.5536
+handbag,control,3,3129,2188,0.6993
+handbag,method,3,3129,1861,0.5948
+vase,control,8,2655,1825,0.6874
+vase,method,8,2655,1963,0.7394
+suitcase,zero-shot,6,2614,1574,0.6021
+book,zero-shot,25,2388,1348,0.5645
+bowl,zero-shot,25,2342,1386,0.5918
+sink,zero-shot,12,2303,1470,0.6383
+bottle,zero-shot,38,2119,965,0.4554
+cup,zero-shot,19,1689,991,0.5867
+microwave,control,10,1509,1211,0.8025
+microwave,method,10,1509,1186,0.786
+keyboard,zero-shot,8,1477,255,0.1726
+handbag,zero-shot,3,1043,584,0.5599
+vase,zero-shot,8,885,596,0.6734
+toilet,control,1,831,584,0.7028
+toilet,method,1,831,534,0.6426
+teddy bear,control,6,609,262,0.4302
+teddy bear,method,6,609,195,0.3202
+microwave,zero-shot,10,503,375,0.7455
+backpack,control,2,393,391,0.9949
+backpack,method,2,393,352,0.8957
+knife,control,9,366,244,0.6667
+knife,method,9,366,289,0.7896
+clock,control,4,303,176,0.5809
+clock,method,4,303,185,0.6106
+toilet,zero-shot,1,277,139,0.5018
+teddy bear,zero-shot,6,203,144,0.7094
+backpack,zero-shot,2,131,70,0.5344
+knife,zero-shot,9,122,34,0.2787
+clock,zero-shot,4,101,23,0.2277
+toothbrush,control,1,78,0,0.0
+toothbrush,method,1,78,1,0.0128
+toothbrush,zero-shot,1,26,0,0.0
+laptop,control,4,18,18,1.0
+laptop,method,4,18,18,1.0
+laptop,zero-shot,4,6,6,1.0
+toaster,control,7,3,0,0.0
+toaster,method,7,3,0,0.0
+toaster,zero-shot,7,1,0,0.0
+mouse,control,4,0,0,
+spoon,control,1,0,0,
+wine glass,control,1,0,0,
+mouse,method,4,0,0,
+spoon,method,1,0,0,
+wine glass,method,1,0,0,
+mouse,zero-shot,4,0,0,
+spoon,zero-shot,1,0,0,
+wine glass,zero-shot,1,0,0,
