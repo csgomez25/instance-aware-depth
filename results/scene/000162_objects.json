@@ -1,0 +1,11 @@
+{
+ "image": "000162",
+ "ckpt": "../runs/h7_edge_yolo_l1.0_s0_laptop/final.pth",
+ "intrinsics": [
+  518.8579,
+  519.4696,
+  325.5824,
+  253.7362
+ ],
+ "objects": []
+}

@@ -18,3 +18,4 @@ dependencies:
       - open3d==0.20.0
       - ultralytics==8.4.216
       - lap==0.5.14
+      - imageio-ffmpeg==0.8.1

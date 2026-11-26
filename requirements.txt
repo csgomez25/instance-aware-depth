@@ -9,3 +9,4 @@ scikit-image        # iBims-1 depth boundary error (official Canny)
 open3d>=0.19
 ultralytics==8.4.216
 lap==0.5.14  # ByteTrack association (tools/track_demo.py)
+imageio-ffmpeg==0.8.1  # H.264 re-encoding of result videos (tools/web_video.py)

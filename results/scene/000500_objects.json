@@ -1,0 +1,114 @@
+{
+ "image": "000500",
+ "ckpt": "../runs/h7_edge_yolo_l1.0_s0_laptop/final.pth",
+ "intrinsics": [
+  518.8579,
+  519.4696,
+  325.5824,
+  253.7362
+ ],
+ "objects": [
+  {
+   "id": 1,
+   "class": "toilet",
+   "conf": 0.914,
+   "n_points": 15274,
+   "distance_m": 2.514,
+   "center_m": [
+    0.728,
+    0.215,
+    2.54
+   ],
+   "size_m": [
+    0.4,
+    0.813,
+    0.469
+   ]
+  },
+  {
+   "id": 2,
+   "class": "sink",
+   "conf": 0.265,
+   "n_points": 5028,
+   "distance_m": 2.39,
+   "center_m": [
+    -0.271,
+    -0.18,
+    2.418
+   ],
+   "size_m": [
+    0.847,
+    0.189,
+    0.601
+   ]
+  },
+  {
+   "id": 3,
+   "class": "person",
+   "conf": 0.818,
+   "n_points": 3731,
+   "distance_m": 4.257,
+   "center_m": [
+    -0.649,
+    -1.334,
+    4.052
+   ],
+   "size_m": [
+    0.347,
+    0.691,
+    0.735
+   ]
+  },
+  {
+   "id": 4,
+   "class": "person",
+   "conf": 0.588,
+   "n_points": 2261,
+   "distance_m": 4.241,
+   "center_m": [
+    -0.163,
+    -1.369,
+    4.085
+   ],
+   "size_m": [
+    0.194,
+    0.659,
+    0.572
+   ]
+  },
+  {
+   "id": 5,
+   "class": "sink",
+   "conf": 0.4,
+   "n_points": 1581,
+   "distance_m": 2.515,
+   "center_m": [
+    -0.329,
+    -0.177,
+    2.493
+   ],
+   "size_m": [
+    0.355,
+    0.107,
+    0.287
+   ]
+  },
+  {
+   "id": 6,
+   "class": "bottle",
+   "conf": 0.427,
+   "n_points": 487,
+   "distance_m": 2.62,
+   "center_m": [
+    -0.488,
+    -0.303,
+    2.599
+   ],
+   "size_m": [
+    0.068,
+    0.18,
+    0.127
+   ]
+  }
+ ]
+}

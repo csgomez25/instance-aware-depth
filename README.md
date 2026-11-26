@@ -248,6 +248,15 @@ cleanest outlines, as on NYU. The tracker splits the two actors into 5 to 21 IDs
 occluded. Videos (`results/tracking/<sequence>_method.mp4`, not committed): photo with IDs and distances, predicted
 depth, and a top-down map with predicted positions (dots, trails) and Kinect positions (rings).
 
+## Figures and demos (in `results/`)
+| Folder | Contents |
+|---|---|
+| `results/scene/` | Labeled 3D scenes (final method model) for NYU val 000500, 000920, 000921, 000162: `_rgb.ply` / `_labels.ply` point clouds (open in MeshLab, CloudCompare or Open3D), `_objects.json`, `_overview.png` |
+| `results/novel_view/` | `<id>_views.jpg`: GT / zero-shot / control / method clouds from rotated cameras, flying points red; `<id>_orbit.mp4`: control vs method turntable |
+| `results/tracking/` | `<sequence>_method.mp4`: TUM people tracking with IDs, distances, depth and top-down map; `tum_people.csv` |
+
+Videos are H.264 (`python tools/web_video.py` re-encodes new ones), so they play on GitHub and in PowerPoint.
+
 ## Setup
 **Local**
 ```bash

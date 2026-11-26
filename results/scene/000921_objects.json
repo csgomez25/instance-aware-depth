@@ -1,0 +1,29 @@
+{
+ "image": "000921",
+ "ckpt": "../runs/h7_edge_yolo_l1.0_s0_laptop/final.pth",
+ "intrinsics": [
+  518.8579,
+  519.4696,
+  325.5824,
+  253.7362
+ ],
+ "objects": [
+  {
+   "id": 1,
+   "class": "bed",
+   "conf": 0.905,
+   "n_points": 91555,
+   "distance_m": 2.669,
+   "center_m": [
+    -0.497,
+    0.201,
+    2.899
+   ],
+   "size_m": [
+    2.206,
+    1.13,
+    1.805
+   ]
+  }
+ ]
+}

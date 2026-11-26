@@ -19,3 +19,10 @@ runs/
 __pycache__/
 .ipynb_checkpoints/
 .DS_Store
+
+# Figures and demos kept on GitHub (videos re-encoded with tools/web_video.py)
+!results/novel_view/*.jpg
+!results/novel_view/*.mp4
+!results/tracking/*.mp4
+!results/scene/*.png
+!results/scene/*.ply
