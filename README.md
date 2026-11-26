@@ -40,7 +40,8 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 | iBims-1 zero-shot results (seed 0, Colab) | ✅ |
 | Labeled 3D scene (`tools/scene.py`): objects and people as separate point clouds with distance and size | ✅ |
 | Flying pixels per object class (`tools/flying_by_class.py`) | ✅ |
-| Novel-view renders, person tracking video demo | ⬜ |
+| Novel-view renders (`tools/novel_view.py`): GT, zero-shot, control and method point clouds from rotated cameras, flying points in red | ✅ |
+| Person tracking video demo | ⬜ |
 | Final test numbers (H6) | ⬜ |
 | Paper, slides | ⬜ |
 
@@ -149,6 +150,20 @@ some flying pixels, not boundary F1.
 The edge loss helps furniture most (bed −0.10). People are the class that fine-tuning damages most, and the edge
 loss does not help them: NYU has few people to learn from.
 
+**Novel views** (`results/novel_view/<id>_views.jpg`, seed-0 runs). Each scene is re-rendered from virtual cameras
+rotated about its centre, with flying points in red. Flying fraction per image:
+
+| NYU val image | Zero-shot | Control | Edge loss (λ 1) |
+|---|---|---|---|
+| 000500 (bathroom, fixed example) | 0.226 | 0.504 | 0.465 |
+| 000921 (bedroom) | 0.309 | 0.453 | **0.169** |
+| 000920 (bedroom) | 0.587 | 0.695 | 0.496 |
+| 000162 | 0.316 | 0.446 | 0.291 |
+
+000921, 000920 and 000162 are the three val images where the edge loss lowers flying most (`--pick 3`), so they
+show the best case, not the average. In 000921 the control smears the bed's near edge into a sheet of points
+between bed and floor; the method mostly removes it.
+
 ## Setup
 **Local**
 ```bash
@@ -175,6 +190,8 @@ python eval_nyu.py --split val --gt filled         # tuning; --split test only f
 python scene.py 000500 --ckpt ../runs/<run>/best.pth   # labeled 3D scene: .ply (photo + per-object colours), objects .json, overview .png -> results/scene/
 python scene.py room.jpg                               # any photo; YOLO11s-seg finds the objects and people
 python flying_by_class.py --split val --group zero-shot=zero-shot --group method=<run>,<run>   # flying pixels per class
+python novel_view.py 000921 --orbit                    # rotated-camera renders (+ turntable mp4) -> results/novel_view/
+python novel_view.py --pick 3 --split val              # the images where the edge loss changes flying most
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 

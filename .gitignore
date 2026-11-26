@@ -9,6 +9,7 @@ results/**/*.npy
 results/**/*.ply
 results/**/*.png
 results/**/*.jpg
+results/**/*.mp4
 results/**/*_per_image.csv
 results/**/*_pairs.csv
 runs/
