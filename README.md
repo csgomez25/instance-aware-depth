@@ -44,7 +44,7 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 | Person tracking video demo | ⬜ |
 | Final test numbers (H6): NYU test + iBims-1, 3 seeds | ✅ |
 | Fixed-epoch rerun (H7): last-epoch weights, 3 seeds, NYU test + iBims-1 | ✅ |
-| TUM RGB-D person tracking demo | ⬜ |
+| TUM RGB-D person tracking demo (`tools/track_demo.py`): IDs, distances, top-down map, depth scored on people | ✅ |
 | Paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
@@ -225,6 +225,29 @@ rotated about its centre, with flying points in red. Flying fraction per image:
 show the best case, not the average. In 000921 the control smears the bed's near edge into a sheet of points
 between bed and floor; the method mostly removes it.
 
+**People in 3D, TUM RGB-D** (`tools/track_demo.py`; `results/tracking/tum_people.csv`). YOLO11s-seg + ByteTrack
+track people in three freiburg3 sequences; each person's distance and position come from our depth alone and are
+scored against the Kinect depth TUM provides (metric, no scale alignment). Last-epoch H7 weights, seed 0, so one
+model per setting.
+
+| Sequence | Model | Depth error on people (AbsRel) ↓ | Flying pixels around people ↓ | Distance error per person (m) ↓ |
+|---|---|---|---|---|
+| walking_xyz (827 frames) | Zero-shot | 0.460 | **0.362** | 0.78 |
+| | Control | 0.120 | 0.589 | 0.16 |
+| | Method | **0.117** | 0.578 | **0.15** |
+| walking_halfsphere (1021) | Zero-shot | 0.398 | **0.389** | 0.65 |
+| | Control | **0.162** | 0.480 | **0.27** |
+| | Method | 0.164 | 0.470 | 0.28 |
+| sitting_xyz (1219) | Zero-shot | 0.384 | **0.230** | 0.63 |
+| | Control | 0.088 | 0.535 | **0.13** |
+| | Method | **0.088** | 0.487 | **0.13** |
+
+NYU fine-tuning cuts the distance error to people from 0.6-0.8 m to 0.13-0.28 m. The edge loss lowers flying
+pixels around people on all three sequences (−0.01 to −0.05) and ties the control on depth. Zero-shot keeps the
+cleanest outlines, as on NYU. The tracker splits the two actors into 5 to 21 IDs when they leave view or are
+occluded. Videos (`results/tracking/<sequence>_method.mp4`, not committed): photo with IDs and distances, predicted
+depth, and a top-down map with predicted positions (dots, trails) and Kinect positions (rings).
+
 ## Setup
 **Local**
 ```bash
@@ -255,6 +278,7 @@ python novel_view.py 000921 --orbit                    # rotated-camera renders 
 python novel_view.py --pick 3 --split val              # the images where the edge loss changes flying most
 python h6_table.py                                     # H6 table (best-val checkpoints) -> results/h6_test.csv
 python h6_table.py --final                             # H7 table (last-epoch checkpoints) -> results/h7_test.csv
+python track_demo.py walking_xyz walking_halfsphere sitting_xyz   # people tracking + depth on TUM -> results/tracking/
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 
@@ -293,6 +317,9 @@ results/        small CSV summaries of results
 - NYU Depth V2 (labeled): https://cs.nyu.edu/~fergus/datasets/nyu_depth_v2.html
 - DA-2K: https://huggingface.co/datasets/depth-anything/DA-2K
 - iBims-1: https://www.asg.ed.tum.de/lmf/ibims1/ (core set via rsync, see `scripts/setup.sh`)
+- TUM RGB-D (Sturm et al., IROS 2012), freiburg3 walking_xyz, walking_halfsphere, sitting_xyz, for the tracking
+  demo; not in `setup.sh`. Download into `data/tum/`:
+  `for s in walking_xyz walking_halfsphere sitting_xyz; do curl -L https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_$s.tgz | tar xz -C data/tum; done`
 
 ## Team
 **RGB-D Scene**. Members: _to be added._

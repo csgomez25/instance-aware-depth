@@ -17,3 +17,4 @@ dependencies:
       - scikit-image==0.26.0
       - open3d==0.20.0
       - ultralytics==8.4.216
+      - lap==0.5.14
