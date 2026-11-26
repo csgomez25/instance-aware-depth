@@ -43,7 +43,8 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 | Novel-view renders (`tools/novel_view.py`): GT, zero-shot, control and method point clouds from rotated cameras, flying points in red | ✅ |
 | Person tracking video demo | ⬜ |
 | Final test numbers (H6): NYU test + iBims-1, 3 seeds | ✅ |
-| Fixed-epoch rerun (H7, `final.pth`), TUM RGB-D person demo | ⬜ |
+| Fixed-epoch rerun (H7): last-epoch weights, 3 seeds, NYU test + iBims-1 | ✅ |
+| TUM RGB-D person tracking demo | ⬜ |
 | Paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
@@ -57,7 +58,37 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 NYU uses the zero-shot Hypersim metric model, the Eigen crop and 0.001–10 m. Most of its error is global scale:
 per-image scale alignment drops AbsRel from about 0.18 to 0.07.
 
-## Final results (H6: NYU test, 654 images, and iBims-1; 3 seeds)
+## Final results (H7: last-epoch weights; NYU test, 654 images, and iBims-1; 3 seeds)
+The headline table. Each run is the weights after epoch 20, with no checkpoint selection, so the seeds are
+compared at the same point in training. Mean ± std over seeds; p as in H6 below. `results/h7_test.csv`, built by
+`tools/h6_table.py --final` after `runs/h7_queue.sh`.
+
+| Benchmark | Metric | Zero-shot | Control (SiLog) | Method (SiLog + edge) | p |
+|---|---|---|---|---|---|
+| NYU test, filled | AbsRel ↓ | 0.186 | **0.092 ± 0.001** | **0.092 ± 0.000** | 0.63 |
+| | RMSE ↓ | 0.590 | **0.335 ± 0.002** | 0.336 ± 0.001 | 0.004 |
+| | δ1 ↑ | 0.740 | **0.926 ± 0.001** | **0.926 ± 0.000** | 0.009 |
+| | Boundary F1 ↑ | **0.175** | 0.111 ± 0.001 | 0.123 ± 0.001 | <0.001 |
+| | Object boundary F1 ↑ | **0.221** | 0.149 ± 0.001 | 0.157 ± 0.002 | <0.001 |
+| | Flying ↓ | **0.489** | 0.603 ± 0.003 | 0.554 ± 0.003 | <0.001 |
+| NYU test, raw | AbsRel ↓ | 0.181 | **0.086 ± 0.001** | **0.086 ± 0.000** | 0.36 |
+| | RMSE ↓ | 0.542 | **0.294 ± 0.002** | **0.294 ± 0.001** | 0.80 |
+| | δ1 ↑ | 0.752 | 0.939 ± 0.001 | **0.939 ± 0.001** | 0.21 |
+| iBims-1 | AbsRel ↓ | 0.162 | **0.148 ± 0.000** | **0.148 ± 0.001** | 0.51 |
+| | Scale-aligned AbsRel ↓ | **0.069** | 0.073 ± 0.000 | 0.073 ± 0.000 | 0.34 |
+| | DBE accuracy ↓ | 1.93 | **1.91 ± 0.02** | 2.23 ± 0.04 | <0.001 |
+| | DBE completeness ↓ | **9.79** | 22.8 ± 1.5 | 21.9 ± 1.5 | 0.10 |
+| | Boundary F1 ↑ | **0.143** | 0.052 ± 0.001 | 0.047 ± 0.000 | 0.07 |
+| | Flying ↓ | **0.451** | 0.564 ± 0.002 | 0.539 ± 0.001 | <0.001 |
+
+Without checkpoint selection the seed std drops 3-8x, and the edge loss has clear effects at no depth cost. On NYU
+it raises boundary F1 by 0.011 (about 10 seed stds), object-boundary F1 by 0.009, and cuts flying pixels by 0.049.
+On iBims-1 (unseen) it still cuts flying pixels (−0.025), but its edges are less precisely placed (DBE accuracy,
+boundary F1). The best-epoch selection used in H5/H6 picked different epochs per seed (11 to 19), which hid the
+boundary gain in seed noise. Zero-shot keeps the best boundaries everywhere; fine-tuning trades them for metric
+accuracy, and the edge loss wins back part of that trade on NYU.
+
+## H6: best-val-epoch checkpoints (NYU test and iBims-1; 3 seeds)
 Mean ± std over seeds; zero-shot is one model. p: Wilcoxon signed-rank over images, method vs control, on each
 image's seed-averaged score. It ignores seed variance, so read it together with the std. `results/h6_test.csv`,
 built by `tools/h6_table.py`.
@@ -222,7 +253,8 @@ python scene.py room.jpg                               # any photo; YOLO11s-seg 
 python flying_by_class.py --split val --group zero-shot=zero-shot --group method=<run>,<run>   # flying pixels per class
 python novel_view.py 000921 --orbit                    # rotated-camera renders (+ turntable mp4) -> results/novel_view/
 python novel_view.py --pick 3 --split val              # the images where the edge loss changes flying most
-python h6_table.py                                     # final table after runs/h6_queue.sh -> results/h6_test.csv
+python h6_table.py                                     # H6 table (best-val checkpoints) -> results/h6_test.csv
+python h6_table.py --final                             # H7 table (last-epoch checkpoints) -> results/h7_test.csv
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 

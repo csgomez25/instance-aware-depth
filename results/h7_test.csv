@@ -1,0 +1,18 @@
+benchmark,metric,better,zero-shot,zero-shot_std,control,control_std,method,method_std,p_method_vs_control
+"NYU test, filled GT",abs_rel,lower,0.1864,,0.0922,0.0006,0.0922,0.0003,0.6297
+"NYU test, filled GT",rmse,lower,0.5896,,0.3351,0.0016,0.336,0.0011,0.0043
+"NYU test, filled GT",d1,higher,0.7397,,0.9257,0.0006,0.9258,0.0004,0.0092
+"NYU test, filled GT",bf1,higher,0.1745,,0.1114,0.0009,0.1225,0.0014,0.0
+"NYU test, filled GT",bf1_obj,higher,0.2211,,0.1485,0.0014,0.1571,0.0023,0.0
+"NYU test, filled GT",flying,lower,0.4892,,0.6025,0.0029,0.5538,0.0028,0.0
+"NYU test, raw GT",abs_rel,lower,0.1806,,0.0863,0.0006,0.086,0.0003,0.364
+"NYU test, raw GT",rmse,lower,0.5424,,0.2943,0.0019,0.2937,0.0012,0.7987
+"NYU test, raw GT",d1,higher,0.7523,,0.9385,0.0006,0.9393,0.0005,0.2105
+iBims-1,abs_rel,lower,0.1621,,0.1475,0.0004,0.1478,0.0009,0.5136
+iBims-1,rmse,lower,0.5483,,0.5953,0.0038,0.5962,0.0049,0.2565
+iBims-1,d1,higher,0.7951,,0.7547,0.0028,0.7538,0.0057,0.9722
+iBims-1,sa_abs_rel,lower,0.0688,,0.073,0.0001,0.0734,0.0002,0.3444
+iBims-1,dbe_acc,lower,1.9266,,1.9051,0.0228,2.2344,0.0442,0.0
+iBims-1,dbe_com,lower,9.7864,,22.7897,1.5439,21.9202,1.5425,0.0999
+iBims-1,bf1,higher,0.1433,,0.0521,0.0006,0.0465,0.0003,0.071
+iBims-1,flying,lower,0.4506,,0.5642,0.002,0.5392,0.0008,0.0
