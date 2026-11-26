@@ -42,7 +42,8 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 | Flying pixels per object class (`tools/flying_by_class.py`) | ✅ |
 | Novel-view renders (`tools/novel_view.py`): GT, zero-shot, control and method point clouds from rotated cameras, flying points in red | ✅ |
 | Person tracking video demo | ⬜ |
-| Final test numbers (H6) | ⬜ |
+| Final test numbers (H6): NYU test + iBims-1, 3 seeds | ✅ |
+| Fixed-epoch rerun (H7, `final.pth`), TUM RGB-D person demo | ⬜ |
 | Paper, slides | ⬜ |
 
 ## Baseline results (ViT-S, no fine-tuning)
@@ -55,6 +56,35 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 
 NYU uses the zero-shot Hypersim metric model, the Eigen crop and 0.001–10 m. Most of its error is global scale:
 per-image scale alignment drops AbsRel from about 0.18 to 0.07.
+
+## Final results (H6: NYU test, 654 images, and iBims-1; 3 seeds)
+Mean ± std over seeds; zero-shot is one model. p: Wilcoxon signed-rank over images, method vs control, on each
+image's seed-averaged score. It ignores seed variance, so read it together with the std. `results/h6_test.csv`,
+built by `tools/h6_table.py`.
+
+| Benchmark | Metric | Zero-shot | Control (SiLog) | Method (SiLog + edge) | p |
+|---|---|---|---|---|---|
+| NYU test, filled | AbsRel ↓ | 0.186 | **0.091 ± 0.001** | **0.091 ± 0.000** | 0.007 |
+| | RMSE ↓ | 0.590 | **0.336 ± 0.002** | 0.338 ± 0.002 | <0.001 |
+| | δ1 ↑ | 0.740 | **0.928 ± 0.001** | 0.927 ± 0.001 | <0.001 |
+| | Boundary F1 ↑ | **0.175** | 0.108 ± 0.007 | 0.112 ± 0.007 | <0.001 |
+| | Object boundary F1 ↑ | **0.221** | 0.145 ± 0.008 | 0.145 ± 0.008 | 0.35 |
+| | Flying ↓ | **0.489** | 0.604 ± 0.011 | 0.573 ± 0.009 | <0.001 |
+| NYU test, raw | AbsRel ↓ | 0.181 | **0.085 ± 0.001** | **0.085 ± 0.000** | 0.06 |
+| | RMSE ↓ | 0.542 | **0.295 ± 0.002** | 0.296 ± 0.002 | 0.003 |
+| | δ1 ↑ | 0.752 | **0.941 ± 0.001** | 0.940 ± 0.000 | 0.07 |
+| iBims-1 | AbsRel ↓ | 0.162 | **0.151 ± 0.000** | 0.152 ± 0.002 | 0.55 |
+| | Scale-aligned AbsRel ↓ | **0.069** | 0.073 ± 0.001 | 0.074 ± 0.000 | 0.08 |
+| | DBE accuracy ↓ | 1.93 | **1.89 ± 0.02** | 2.23 ± 0.06 | <0.001 |
+| | DBE completeness ↓ | **9.79** | 23.8 ± 1.3 | 24.8 ± 2.1 | 0.01 |
+| | Boundary F1 ↑ | **0.143** | 0.052 ± 0.003 | 0.044 ± 0.004 | 0.001 |
+| | Flying ↓ | **0.451** | 0.568 ± 0.010 | 0.557 ± 0.007 | 0.005 |
+
+Fine-tuning halves NYU AbsRel and helps iBims-1 metric depth a little, but costs boundary quality on both. The edge
+loss cuts NYU flying pixels by 0.031, about 3 seed stds, at no measurable depth cost; that is the one effect larger
+than the seed spread. Its boundary-F1 gain on NYU (+0.003) is inside the seed std, and on iBims-1 its edges are
+worse (DBE accuracy, F1). Raw-GT boundary metrics equal the filled ones (boundaries are always scored on filled
+depth) and are left out.
 
 ## Fine-tuning results so far (NYU val, 92 images, one seed)
 Boundary metrics (`tools/boundary.py`): `bf1` is the scale-invariant depth-boundary F1 of Depth Pro, `bf1_obj` the
@@ -192,6 +222,7 @@ python scene.py room.jpg                               # any photo; YOLO11s-seg 
 python flying_by_class.py --split val --group zero-shot=zero-shot --group method=<run>,<run>   # flying pixels per class
 python novel_view.py 000921 --orbit                    # rotated-camera renders (+ turntable mp4) -> results/novel_view/
 python novel_view.py --pick 3 --split val              # the images where the edge loss changes flying most
+python h6_table.py                                     # final table after runs/h6_queue.sh -> results/h6_test.csv
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 

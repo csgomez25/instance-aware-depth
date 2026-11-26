@@ -11,6 +11,7 @@ Each run lives in $RUNS_DIR/<name>/:
     config.json   arguments
     log.csv       one row per epoch: train loss, lr, time, val metrics on filled and raw depth
     best.pth      weights with the lowest val AbsRel (filled depth); use with eval_nyu.py --ckpt
+    final.pth     weights after the last epoch (no model selection, so seeds compare at a fixed epoch)
     last.pth      weights + optimizer state for resuming (deleted when the run finishes)
     done.json     written when the run finishes: best epoch and val AbsRel
 Re-running the same command resumes from last.pth, so a Colab disconnect costs at most one epoch.
@@ -196,7 +197,8 @@ def main():
               f"val AbsRel {score:.4f} (raw {val['raw']['abs_rel']:.4f})  d1 {val['filled']['d1']:.4f}  "
               f"best {best:.4f}  [{train_time:.0f}s train, {row['val_s']:.0f}s val, {row['peak_mem_gb']} GB]")
 
-    # Finished: the resume state (~300 MB with optimizer) is no longer needed; keep best.pth + log.
+    # Finished: the resume state (~300 MB with optimizer) is no longer needed; keep best.pth, final.pth + log.
+    save_atomic({"model": model.state_dict(), "epoch": args.epochs, "val": val}, run / "final.pth")
     best_epoch = int(torch.load(run / "best.pth", map_location="cpu", weights_only=False)["epoch"])
     done_path.write_text(json.dumps({"epochs": args.epochs, "best_epoch": best_epoch, "best_val_abs_rel": round(best, 4)}))
     last_path.unlink()
