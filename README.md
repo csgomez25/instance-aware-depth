@@ -44,6 +44,7 @@ RGB image ──► Depth Anything V2 (fine-tuned, edge loss) ──► metric d
 | Person tracking video demo | ⬜ |
 | Final test numbers (H6): NYU test + iBims-1, 3 seeds | ✅ |
 | Fixed-epoch rerun (H7): last-epoch weights, 3 seeds, NYU test + iBims-1 | ✅ |
+| WiSE-FT weight blends of zero-shot and fine-tuned models (`tools/wise_ft.py`), 3 seeds × 3 mixes | ✅ |
 | TUM RGB-D person tracking demo (`tools/track_demo.py`): IDs, distances, top-down map, depth scored on people | ✅ |
 | Paper, slides | ⬜ |
 
@@ -225,6 +226,31 @@ rotated about its centre, with flying points in red. Flying fraction per image:
 show the best case, not the average. In 000921 the control smears the bed's near edge into a sheet of points
 between bed and floor; the method mostly removes it.
 
+## Blending zero-shot and fine-tuned weights (WiSE-FT)
+`tools/wise_ft.py` makes a new model θ = (1 − α)·zero-shot + α·fine-tuned from the H7 last-epoch weights (α 0 =
+zero-shot, α 1 = fully fine-tuned); the inputs are never modified. 3 seeds per cell, mean ± std;
+`results/wise_ft.csv`, built by `tools/wise_table.py` after `runs/wise_queue.sh`.
+
+| α | Model | NYU test AbsRel ↓ | NYU test boundary F1 ↑ | NYU test flying ↓ | iBims-1 AbsRel ↓ | iBims-1 boundary F1 ↑ | iBims-1 flying ↓ |
+|---|---|---|---|---|---|---|---|
+| 0 | Zero-shot | 0.186 | 0.175 | **0.489** | 0.162 | **0.143** | **0.451** |
+| 0.25 | Control | 0.146 ± 0.001 | 0.175 ± 0.002 | 0.534 ± 0.001 | 0.141 ± 0.000 | 0.115 ± 0.000 | 0.510 ± 0.001 |
+| | Method | 0.147 ± 0.000 | **0.177 ± 0.000** | 0.508 ± 0.000 | 0.141 ± 0.000 | 0.119 ± 0.001 | 0.487 ± 0.002 |
+| 0.5 | Control | 0.118 ± 0.001 | 0.163 ± 0.002 | 0.568 ± 0.003 | **0.134 ± 0.001** | 0.090 ± 0.001 | 0.544 ± 0.001 |
+| | Method | 0.118 ± 0.000 | 0.166 ± 0.001 | 0.527 ± 0.001 | **0.134 ± 0.001** | 0.095 ± 0.001 | 0.514 ± 0.003 |
+| 0.75 | Control | 0.100 ± 0.001 | 0.140 ± 0.002 | 0.590 ± 0.003 | 0.138 ± 0.001 | 0.070 ± 0.001 | 0.559 ± 0.002 |
+| | **Method** | 0.100 ± 0.000 | 0.146 ± 0.001 | 0.542 ± 0.001 | 0.138 ± 0.001 | 0.070 ± 0.000 | 0.532 ± 0.002 |
+| 1 | Control | **0.092 ± 0.001** | 0.111 ± 0.001 | 0.603 ± 0.003 | 0.148 ± 0.000 | 0.052 ± 0.001 | 0.564 ± 0.002 |
+| | Method | **0.092 ± 0.000** | 0.123 ± 0.001 | 0.554 ± 0.003 | 0.148 ± 0.001 | 0.047 ± 0.000 | 0.539 ± 0.001 |
+
+- Blending moves smoothly along the accuracy/boundary trade-off, and on iBims-1 (unseen) blends beat both parents
+  on AbsRel (0.134 at α 0.5 vs 0.148 fine-tuned and 0.162 zero-shot).
+- The edge loss and blending add up: at every α the method has the same AbsRel as the control and 0.03-0.05 fewer
+  flying pixels on NYU, 0.02-0.03 fewer on iBims-1. Blending also removes the method's iBims-1 boundary-F1 deficit.
+- Suggested operating point, chosen on NYU val: method at α 0.75. It keeps 91% of the NYU val AbsRel gain of full
+  fine-tuning, and against plain fine-tuning (control, α 1) it gives NYU test boundary F1 0.146 vs 0.111, flying
+  0.542 vs 0.603, and better iBims-1 AbsRel (0.138 vs 0.148), at NYU test AbsRel 0.100 vs 0.092.
+
 **People in 3D, TUM RGB-D** (`tools/track_demo.py`; `results/tracking/tum_people.csv`). YOLO11s-seg + ByteTrack
 track people in three freiburg3 sequences; each person's distance and position come from our depth alone and are
 scored against the Kinect depth TUM provides (metric, no scale alignment). Last-epoch H7 weights, seed 0, so one
@@ -287,6 +313,8 @@ python novel_view.py 000921 --orbit                    # rotated-camera renders 
 python novel_view.py --pick 3 --split val              # the images where the edge loss changes flying most
 python h6_table.py                                     # H6 table (best-val checkpoints) -> results/h6_test.csv
 python h6_table.py --final                             # H7 table (last-epoch checkpoints) -> results/h7_test.csv
+python wise_ft.py ../runs/<run>/final.pth --alphas 0.25 0.5 0.75   # blended models -> runs/wise_<run>_a<alpha>/
+python wise_table.py                                   # blend table after runs/wise_queue.sh -> results/wise_ft.csv
 python track_demo.py walking_xyz walking_halfsphere sitting_xyz   # people tracking + depth on TUM -> results/tracking/
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
