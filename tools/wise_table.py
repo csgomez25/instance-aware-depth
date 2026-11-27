@@ -3,7 +3,8 @@
     python wise_table.py        # after runs/wise_queue.sh
 
 alpha 0 is the zero-shot model, alpha 1 the H7 last-epoch weights, the rest are tools/wise_ft.py blends.
-Scores are mean ± std over seeds on NYU val (to choose alpha), NYU test and iBims-1. The p-value compares
+Scores are mean ± std over seeds on NYU val (to choose alpha), NYU test, iBims-1 and
+DIODE indoor (eval_diode.py, runs/diode_queue.sh). The p-value compares
 method and control at the same alpha (Wilcoxon over images, seed-averaged; read it with the seed std).
 Writes results/wise_ft.csv.
 """
@@ -17,8 +18,9 @@ ALPHAS = [0, 0.25, 0.5, 0.75, 1]
 LAMBDAS = {"control": "0", "method": "1.0"}
 BENCHMARKS = {"NYU val": ("nyu", "_val_filled_per_image.csv", ["abs_rel", "d1", "bf1", "flying"]),
               "NYU test": ("nyu", "_test_filled_per_image.csv", ["abs_rel", "d1", "bf1", "bf1_obj", "flying"]),
-              "iBims-1": ("ibims", "_per_image.csv", ["abs_rel", "sa_abs_rel", "d1", "dbe_acc", "bf1", "flying"])}
-ZERO_SHOT = {"NYU val": "pretrained_hypersim_vits", "NYU test": "h6_zero-shot", "iBims-1": "h6_zero-shot"}
+              "iBims-1": ("ibims", "_per_image.csv", ["abs_rel", "sa_abs_rel", "d1", "dbe_acc", "bf1", "flying"]),
+              "DIODE": ("diode", "_per_image.csv", ["scale", "abs_rel", "sa_abs_rel", "d1", "bf1", "flying"])}
+ZERO_SHOT = {"NYU val": "pretrained_hypersim_vits", "NYU test": "h6_zero-shot", "iBims-1": "h6_zero-shot", "DIODE": "h6_zero-shot"}
 
 
 def tags(group, alpha, bench):

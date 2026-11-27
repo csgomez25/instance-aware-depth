@@ -3,7 +3,8 @@
     python track_demo.py walking_xyz                     # demo video (method model) + people depth scores
     python track_demo.py walking_xyz walking_halfsphere sitting_xyz --stride 2
 
-Per frame, YOLO11s-seg + ByteTrack find people and keep an ID per person. Each person's distance is the median
+Per frame, YOLO11s-seg finds people and a tracker (default BoT-SORT, motion only; the ReID variants in
+tracker_compare.py give fewer IDs but swap the two actors) keeps an ID per person. Each person's distance is the median
 predicted depth inside their mask; their 3D position comes from the mask centre and that distance. The Kinect depth
 of TUM is ground truth: scored per model (zero-shot, control, method; last-epoch H7 seed-0 weights) are
     abs_rel         whole frame, metric (no scale alignment), Kinect depth 0.1-10 m
@@ -33,6 +34,10 @@ MODELS = {"zero-shot": None,
           "control": "h7_edge_yolo_l0_s0_laptop/final.pth",
           "method": "h7_edge_yolo_l1.0_s0_laptop/final.pth"}
 PALETTE = (np.array(matplotlib.colormaps["tab10"].colors)[:, ::-1] * 255).astype(int).tolist()  # BGR
+TRACKERS = {"bytetrack": "bytetrack.yaml",
+            "botsort": "botsort.yaml",
+            "botsort+reid": str(Path(__file__).parent / "trackers" / "botsort_reid.yaml"),
+            "botsort+reid long": str(Path(__file__).parent / "trackers" / "botsort_reid_long.yaml")}
 MAP_SIZE, MAP_RANGE = 480, 6.0  # top-down panel: px, metres shown in x (-3..3) and z (0..6)
 
 
@@ -49,10 +54,10 @@ def frames(seq_dir, max_dt=0.02):
     return out
 
 
-def people(yolo, bgr):
+def people(yolo, bgr, tracker):
     """[(track id, HxW bool mask)] of the people YOLO tracks in this frame."""
     r = yolo.track(bgr, persist=True, classes=[0], conf=0.3, retina_masks=True, verbose=False,
-                   tracker="bytetrack.yaml", device=0 if C.DEVICE == "cuda" else "cpu")[0]
+                   tracker=tracker, device=0 if C.DEVICE == "cuda" else "cpu")[0]
     if r.masks is None or r.boxes.id is None:
         return []
     masks = r.masks.data.cpu().numpy() > 0.5
@@ -123,7 +128,7 @@ def annotate(bgr, pred, persons, positions):
         if tid in positions:
             ys, xs = np.nonzero(m)
             text = f"ID {tid}  {positions[tid][0][1]:.1f} m"
-            org = (int(xs.min()), max(int(ys.min()) - 6, 14))
+            org = (min(int(xs.min()), bgr.shape[1] - 12 * len(text)), max(int(ys.min()) - 6, 18))
             cv2.putText(photo, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 0), 3, cv2.LINE_AA)
             cv2.putText(photo, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1, cv2.LINE_AA)
     norm = np.clip(pred / MAP_RANGE, 0, 1)
@@ -135,6 +140,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("sequences", nargs="+", help="TUM freiburg3 sequence names, e.g. walking_xyz")
     ap.add_argument("--video-model", default="method", choices=list(MODELS))
+    ap.add_argument("--tracker", default="botsort", choices=list(TRACKERS))
     ap.add_argument("--stride", type=int, default=1, help="use every n-th frame")
     ap.add_argument("--limit", type=int, default=None, help="first n frames only (quick test)")
     ap.add_argument("--outdir", default=str(C.RESULTS / "tracking"))
@@ -154,7 +160,7 @@ def main():
         for rgb_path, depth_path in tqdm(pairs, desc=seq):
             bgr = cv2.imread(str(rgb_path))
             gt = cv2.imread(str(depth_path), cv2.IMREAD_UNCHANGED).astype(np.float32) / TUM_DEPTH_SCALE
-            persons = people(yolo, bgr)
+            persons = people(yolo, bgr, TRACKERS[args.tracker])
             ids |= {t for t, _ in persons}
             for name, model in models.items():
                 pred = model.infer_image(bgr)

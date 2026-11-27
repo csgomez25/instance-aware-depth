@@ -1,0 +1,13 @@
+sequence,tracker,ids,top2_share,mean_track_s
+walking_xyz,bytetrack,11,0.39,3.1
+walking_xyz,botsort,10,0.39,3.5
+walking_xyz,botsort+reid,11,0.39,3.2
+walking_xyz,botsort+reid long,9,0.752,3.9
+walking_halfsphere,bytetrack,21,0.471,2.0
+walking_halfsphere,botsort,17,0.575,2.5
+walking_halfsphere,botsort+reid,18,0.574,2.3
+walking_halfsphere,botsort+reid long,12,0.836,3.5
+sitting_xyz,bytetrack,5,0.773,16.1
+sitting_xyz,botsort,5,0.773,16.1
+sitting_xyz,botsort+reid,5,0.773,16.1
+sitting_xyz,botsort+reid long,4,0.995,20.0

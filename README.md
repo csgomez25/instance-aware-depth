@@ -251,6 +251,30 @@ zero-shot, α 1 = fully fine-tuned); the inputs are never modified. 3 seeds per 
   fine-tuning, and against plain fine-tuning (control, α 1) it gives NYU test boundary F1 0.146 vs 0.111, flying
   0.542 vs 0.603, and better iBims-1 AbsRel (0.138 vs 0.148), at NYU test AbsRel 0.100 vs 0.092.
 
+**Third benchmark: DIODE indoor** (`tools/eval_diode.py`; 325 laser-scanned images, never seen in training, depth
+≤ 10 m). Same α grid, 3 seeds, mean ± std; in `results/wise_ft.csv`. "Scale" is median GT / median prediction (1 =
+right size; >1 = the room is predicted too small).
+
+| α | Model | Scale | AbsRel ↓ | AbsRel, scale-aligned ↓ | boundary F1 ↑ | flying ↓ |
+|---|---|---|---|---|---|---|
+| 0 | Zero-shot | **1.26** | 0.282 | 0.110 | **0.066** | 0.370 |
+| 0.25 | Control | 1.28 | **0.274 ± 0.000** | 0.105 ± 0.000 | 0.050 ± 0.001 | 0.365 ± 0.002 |
+| | Method | 1.28 | 0.275 ± 0.001 | 0.105 ± 0.001 | 0.051 ± 0.000 | 0.359 ± 0.002 |
+| 0.5 | Control | 1.32 | 0.277 ± 0.001 | **0.102 ± 0.000** | 0.036 ± 0.001 | 0.358 ± 0.004 |
+| | Method | 1.32 | 0.278 ± 0.001 | **0.102 ± 0.001** | 0.038 ± 0.001 | 0.349 ± 0.002 |
+| 0.75 | Control | 1.36 | 0.284 ± 0.000 | **0.102 ± 0.000** | 0.024 ± 0.000 | 0.347 ± 0.004 |
+| | Method | 1.35 | 0.284 ± 0.001 | **0.102 ± 0.001** | 0.025 ± 0.001 | 0.337 ± 0.002 |
+| 1 | Control | 1.39 | 0.294 ± 0.000 | 0.104 ± 0.000 | 0.015 ± 0.000 | 0.339 ± 0.004 |
+| | Method | 1.39 | 0.294 ± 0.001 | 0.104 ± 0.000 | 0.016 ± 0.001 | **0.329 ± 0.002** |
+
+- Every model predicts DIODE rooms too small, and NYU fine-tuning makes it worse (scale 1.26 → 1.39): the model
+  learns NYU's small rooms. Metric AbsRel therefore barely moves (0.28-0.29), while the scale-aligned AbsRel, which
+  measures shape only, improves from 0.110 to 0.102. Fine-tuning improves shape on a new dataset but not its size.
+- The edge loss gives fewer flying pixels than the control at every α (−0.006 to −0.010, p < 1e-4, seed std
+  ≤ 0.004) and slightly higher boundary F1, at the same scale-aligned AbsRel (p > 0.6).
+- Boundary F1 falls with fine-tuning (0.066 → 0.016) much more than on NYU. DIODE's laser depth has sharp edges;
+  NYU's training depth is Kinect depth filled by inpainting, which likely teaches softer edges (not tested).
+
 **People in 3D, TUM RGB-D** (`tools/track_demo.py`; `results/tracking/tum_people.csv`). YOLO11s-seg + ByteTrack
 track people in three freiburg3 sequences; each person's distance and position come from our depth alone and are
 scored against the Kinect depth TUM provides (metric, no scale alignment). Last-epoch H7 weights, seed 0, so one
@@ -273,6 +297,21 @@ pixels around people on all three sequences (−0.01 to −0.05) and ties the co
 cleanest outlines, as on NYU. The tracker splits the two actors into 5 to 21 IDs when they leave view or are
 occluded. Videos (`results/tracking/<sequence>_method.mp4`, not committed): photo with IDs and distances, predicted
 depth, and a top-down map with predicted positions (dots, trails) and Kinect positions (rings).
+
+**Trackers** (`tools/tracker_compare.py`; `results/tracking/trackers.csv`). Each sequence has the same 2 people,
+so 2 IDs is ideal.
+
+| Sequence | ByteTrack | BoT-SORT | BoT-SORT + ReID | BoT-SORT + ReID, 10 s memory |
+|---|---|---|---|---|
+| walking_xyz | 11 | 10 | 11 | 9 |
+| walking_halfsphere | 21 | 17 | 18 | 12 |
+| sitting_xyz | 5 | 5 | 5 | 4 |
+
+The last column looks best, but crops of each track show it gives one man's ID to the other: its ReID uses YOLO's
+own features, which do not tell the two actors apart. A stricter appearance threshold (0.9) removes most swaps and
+brings walking_halfsphere back to 16 IDs. Fewer IDs here come from wrong merges, so the demo uses plain BoT-SORT
+and the paper reports ID fragmentation as a limitation. The depth scores in the table above do not depend on the
+tracker.
 
 ## Figures and demos (in `results/`)
 | Folder | Contents |
@@ -316,6 +355,8 @@ python h6_table.py --final                             # H7 table (last-epoch ch
 python wise_ft.py ../runs/<run>/final.pth --alphas 0.25 0.5 0.75   # blended models -> runs/wise_<run>_a<alpha>/
 python wise_table.py                                   # blend table after runs/wise_queue.sh -> results/wise_ft.csv
 python track_demo.py walking_xyz walking_halfsphere sitting_xyz   # people tracking + depth on TUM -> results/tracking/
+python tracker_compare.py                              # ID counts per tracker on TUM -> results/tracking/trackers.csv
+python eval_diode.py --ckpt ../runs/<run>/final.pth --tag <run>   # DIODE indoor, metric + scale-aligned -> results/diode/
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
 
@@ -357,6 +398,8 @@ results/        small CSV summaries of results
 - TUM RGB-D (Sturm et al., IROS 2012), freiburg3 walking_xyz, walking_halfsphere, sitting_xyz, for the tracking
   demo; not in `setup.sh`. Download into `data/tum/`:
   `for s in walking_xyz walking_halfsphere sitting_xyz; do curl -L https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_$s.tgz | tar xz -C data/tum; done`
+- DIODE (Vasiljevic et al., 2019), indoor val only (325 images, 2.4 GB unpacked); not in `setup.sh`:
+  `curl -L http://diode-dataset.s3.amazonaws.com/val.tar.gz | tar xz -C data/diode val/indoors`
 
 ## Team
 **RGB-D Scene**. Members: _to be added._
