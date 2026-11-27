@@ -1,0 +1,58 @@
+sequence,tracker,labelled_dets,ids,idf1,switches,impure,coverage
+walking_xyz,bytetrack,1015,7,0.558,5,0.0,0.981
+walking_xyz,botsort,1015,7,0.555,5,0.0,0.976
+walking_xyz,botsort+osnet,1015,7,0.555,5,0.0,0.976
+walking_xyz,botsort+osnet long,1015,7,0.555,5,0.0,0.976
+walking_xyz,deepocsort+osnet,1015,7,0.385,6,0.05,0.967
+walking_xyz,strongsort+osnet,1015,6,0.555,4,0.0,0.965
+walking_xyz,ultralytics bytetrack,1015,8,0.364,6,0.0,0.827
+walking_xyz,ultralytics botsort,1015,8,0.398,6,0.0,0.996
+walking_xyz,ultralytics botsort+reid long,1015,6,0.469,9,0.285,0.996
+walking_halfsphere,bytetrack,1044,9,0.369,10,0.17,0.979
+walking_halfsphere,botsort,1044,8,0.518,7,0.085,0.96
+walking_halfsphere,botsort+osnet,1044,8,0.518,7,0.085,0.965
+walking_halfsphere,botsort+osnet long,1044,8,0.518,7,0.085,0.965
+walking_halfsphere,deepocsort+osnet,1044,9,0.355,8,0.087,0.926
+walking_halfsphere,strongsort+osnet,1044,12,0.318,11,0.0,0.915
+walking_halfsphere,ultralytics bytetrack,1044,9,0.326,10,0.175,0.768
+walking_halfsphere,ultralytics botsort,1044,8,0.529,7,0.084,0.993
+walking_halfsphere,ultralytics botsort+reid long,1044,5,0.719,7,0.203,0.993
+sitting_xyz,bytetrack,2357,3,0.847,1,0.0,0.997
+sitting_xyz,botsort,2357,3,0.846,1,0.0,0.994
+sitting_xyz,botsort+osnet,2357,3,0.846,1,0.0,0.994
+sitting_xyz,botsort+osnet long,2357,2,0.997,0,0.0,0.995
+sitting_xyz,deepocsort+osnet,2357,3,0.844,1,0.0,0.99
+sitting_xyz,strongsort+osnet,2357,7,0.726,7,0.0,0.982
+sitting_xyz,ultralytics bytetrack,2357,5,0.779,8,0.0,0.987
+sitting_xyz,ultralytics botsort,2357,5,0.779,10,0.0,0.998
+sitting_xyz,ultralytics botsort+reid long,2357,2,0.999,0,0.0,0.997
+walking_rpy,bytetrack,939,9,0.365,7,0.0,0.974
+walking_rpy,botsort,939,9,0.366,7,0.0,0.966
+walking_rpy,botsort+osnet reid 0.25,939,7,0.453,7,0.021,0.967
+walking_rpy,botsort+osnet reid 0.35,939,5,0.539,11,0.047,0.969
+walking_rpy,botsort+osnet reid 0.45,939,4,0.55,4,0.005,0.979
+walking_rpy,ultralytics bytetrack,939,10,0.369,8,0.0,0.843
+walking_rpy,ultralytics botsort+reid long,939,8,0.399,11,0.211,0.995
+walking_static,bytetrack,1128,5,0.558,3,0.0,0.987
+walking_static,botsort,1128,6,0.44,4,0.0,0.988
+walking_static,botsort+osnet reid 0.25,1128,4,0.776,3,0.0,0.991
+walking_static,botsort+osnet reid 0.35,1128,3,0.953,2,0.0,0.992
+walking_static,botsort+osnet reid 0.45,1128,2,0.996,0,0.0,0.992
+walking_static,ultralytics bytetrack,1128,7,0.437,5,0.0,0.872
+walking_static,ultralytics botsort+reid long,1128,5,0.805,7,0.006,0.997
+sitting_halfsphere,bytetrack,1145,3,0.949,1,0.0,0.977
+sitting_halfsphere,botsort,1145,3,0.945,1,0.0,0.958
+sitting_halfsphere,botsort+osnet reid 0.25,1145,3,0.945,1,0.0,0.96
+sitting_halfsphere,botsort+osnet reid 0.35,1145,3,0.945,1,0.0,0.96
+sitting_halfsphere,botsort+osnet reid 0.45,1145,3,0.945,1,0.0,0.96
+sitting_halfsphere,ultralytics bytetrack,1145,5,0.918,3,0.0,0.926
+sitting_halfsphere,ultralytics botsort+reid long,1145,4,0.945,5,0.0,0.997
+walking_xyz,botsort+osnet reid 0.25,1015,5,0.702,6,0.0,0.978
+walking_xyz,botsort+osnet reid 0.35,1015,3,0.797,1,0.0,0.983
+walking_xyz,botsort+osnet reid 0.45,1015,2,0.993,0,0.0,0.985
+walking_halfsphere,botsort+osnet reid 0.25,1044,8,0.518,7,0.085,0.965
+walking_halfsphere,botsort+osnet reid 0.35,1044,4,0.95,2,0.0,0.968
+walking_halfsphere,botsort+osnet reid 0.45,1044,2,0.566,8,0.337,0.969
+sitting_xyz,botsort+osnet reid 0.25,2357,2,0.997,0,0.0,0.995
+sitting_xyz,botsort+osnet reid 0.35,2357,2,0.997,0,0.0,0.995
+sitting_xyz,botsort+osnet reid 0.45,2357,2,0.997,0,0.0,0.995

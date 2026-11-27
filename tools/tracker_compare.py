@@ -36,7 +36,8 @@ def track_ids(seq, tracker):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--trackers", nargs="+", default=list(TRACKERS), choices=list(TRACKERS))
+    ULTRA = [t for t in TRACKERS if t != "osnet"]  # osnet: reid_eval.py
+    ap.add_argument("--trackers", nargs="+", default=ULTRA, choices=ULTRA)
     ap.add_argument("--sequences", nargs="+", default=SEQUENCES)
     args = ap.parse_args()
     rows = []

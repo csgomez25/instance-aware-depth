@@ -3,8 +3,8 @@
     python track_demo.py walking_xyz                     # demo video (method model) + people depth scores
     python track_demo.py walking_xyz walking_halfsphere sitting_xyz --stride 2
 
-Per frame, YOLO11s-seg finds people and a tracker (default BoT-SORT, motion only; the ReID variants in
-tracker_compare.py give fewer IDs but swap the two actors) keeps an ID per person. Each person's distance is the median
+Per frame, YOLO11s-seg finds people and a tracker keeps an ID per person. Default: BoT-SORT with OSNet person ReID
+(boxmot; run with ~/venvs/reid/bin/python, see reid_eval.py); in the main env use --tracker botsort. Each person's distance is the median
 predicted depth inside their mask; their 3D position comes from the mask centre and that distance. The Kinect depth
 of TUM is ground truth: scored per model (zero-shot, control, method; last-epoch H7 seed-0 weights) are
     abs_rel         whole frame, metric (no scale alignment), Kinect depth 0.1-10 m
@@ -37,7 +37,8 @@ PALETTE = (np.array(matplotlib.colormaps["tab10"].colors)[:, ::-1] * 255).astype
 TRACKERS = {"bytetrack": "bytetrack.yaml",
             "botsort": "botsort.yaml",
             "botsort+reid": str(Path(__file__).parent / "trackers" / "botsort_reid.yaml"),
-            "botsort+reid long": str(Path(__file__).parent / "trackers" / "botsort_reid_long.yaml")}
+            "botsort+reid long": str(Path(__file__).parent / "trackers" / "botsort_reid_long.yaml"),
+            "osnet": "boxmot"}  # BoT-SORT + OSNet person ReID (boxmot), see osnet_tracker
 MAP_SIZE, MAP_RANGE = 480, 6.0  # top-down panel: px, metres shown in x (-3..3) and z (0..6)
 
 
@@ -54,8 +55,26 @@ def frames(seq_dir, max_dt=0.02):
     return out
 
 
+def osnet_tracker(appearance_thresh=0.35):
+    """boxmot BoT-SORT with OSNet-x1.0 (MSMT17) ReID, appearance matching not gated by box overlap and a 10 s
+    memory, so people who leave view get their ID back. 0.35 is chosen in reid_eval.py; looser merges people."""
+    from boxmot import ReIDConfig, create_tracker  # separate venv, see reid_eval.py
+    return create_tracker("botsort", reid=ReIDConfig("osnet_x1_0_msmt17", device="cuda:0", precision="fp16"),
+                          max_lost_frames=300, proximity_thresh=1.0, appearance_thresh=appearance_thresh)
+
+
 def people(yolo, bgr, tracker):
-    """[(track id, HxW bool mask)] of the people YOLO tracks in this frame."""
+    """[(track id, HxW bool mask)] of the people YOLO tracks in this frame. tracker: an ultralytics tracker yaml,
+    or a boxmot tracker object that is fed YOLO's detections."""
+    if not isinstance(tracker, str):
+        r = yolo.predict(bgr, classes=[0], conf=0.3, retina_masks=True, verbose=False,
+                         device=0 if C.DEVICE == "cuda" else "cpu")[0]
+        det = np.c_[r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy(), np.zeros(len(r.boxes))]
+        out = tracker.update(det.astype(np.float32), bgr)
+        if r.masks is None or not len(out):
+            return []
+        masks = r.masks.data.cpu().numpy() > 0.5
+        return [(int(o[4]), masks[int(o[7])]) for o in out if 0 <= int(o[7]) < len(masks)]
     r = yolo.track(bgr, persist=True, classes=[0], conf=0.3, retina_masks=True, verbose=False,
                    tracker=tracker, device=0 if C.DEVICE == "cuda" else "cpu")[0]
     if r.masks is None or r.boxes.id is None:
@@ -140,7 +159,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("sequences", nargs="+", help="TUM freiburg3 sequence names, e.g. walking_xyz")
     ap.add_argument("--video-model", default="method", choices=list(MODELS))
-    ap.add_argument("--tracker", default="botsort", choices=list(TRACKERS))
+    ap.add_argument("--tracker", default="osnet", choices=list(TRACKERS))
     ap.add_argument("--stride", type=int, default=1, help="use every n-th frame")
     ap.add_argument("--limit", type=int, default=None, help="first n frames only (quick test)")
     ap.add_argument("--outdir", default=str(C.RESULTS / "tracking"))
@@ -153,6 +172,7 @@ def main():
     for seq in args.sequences:
         pairs = frames(TUM / f"rgbd_dataset_freiburg3_{seq}")[::args.stride][:args.limit]
         yolo = load_yolo()  # fresh tracker state per sequence
+        tracker = osnet_tracker() if args.tracker == "osnet" else TRACKERS[args.tracker]
         video = cv2.VideoWriter(str(out / f"{seq}_{args.video_model}.mp4"), cv2.VideoWriter_fourcc(*"mp4v"),
                                 30 / args.stride, (2 * C.NYU_W + MAP_SIZE, C.NYU_H))
         scores = {n: [] for n in models}
@@ -160,7 +180,7 @@ def main():
         for rgb_path, depth_path in tqdm(pairs, desc=seq):
             bgr = cv2.imread(str(rgb_path))
             gt = cv2.imread(str(depth_path), cv2.IMREAD_UNCHANGED).astype(np.float32) / TUM_DEPTH_SCALE
-            persons = people(yolo, bgr, TRACKERS[args.tracker])
+            persons = people(yolo, bgr, tracker)
             ids |= {t for t, _ in persons}
             for name, model in models.items():
                 pred = model.infer_image(bgr)

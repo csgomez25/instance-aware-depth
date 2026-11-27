@@ -1,0 +1,76 @@
+sequence,tracklet,person,note
+walking_xyz,0,A,black shirt
+walking_xyz,1,B,plaid shirt
+walking_xyz,2,B,
+walking_xyz,3,B,partial
+walking_xyz,11,x,blurred face; person unclear
+walking_xyz,18,B,
+walking_xyz,23,A,
+walking_xyz,26,A,
+walking_xyz,30,B,
+walking_xyz,32,A,
+walking_halfsphere,0,A,
+walking_halfsphere,1,B,
+walking_halfsphere,4,B,
+walking_halfsphere,5,A,
+walking_halfsphere,11,A,
+walking_halfsphere,12,A,
+walking_halfsphere,13,x,blurred face; person unclear
+walking_halfsphere,16,B,
+walking_halfsphere,30,x,blurred face; person unclear
+walking_halfsphere,36,A,
+walking_halfsphere,46,x,mixed: A until frame ~499 then B
+walking_halfsphere,47,A,
+walking_halfsphere,52,B,
+walking_halfsphere,54,B,
+walking_halfsphere,57,B,
+walking_halfsphere,59,A,
+walking_halfsphere,62,B,
+walking_halfsphere,69,B,
+walking_halfsphere,73,A,
+walking_halfsphere,77,x,face box overlapping tracklet 69
+sitting_xyz,0,A,
+sitting_xyz,1,B,
+sitting_xyz,29,B,
+sitting_xyz,36,A,
+sitting_xyz,44,A,
+sitting_xyz,47,A,
+sitting_xyz,50,A,
+walking_rpy,1,A,held-out
+walking_rpy,3,A,held-out
+walking_rpy,25,A,held-out
+walking_rpy,27,A,held-out
+walking_rpy,41,A,held-out
+walking_rpy,60,A,held-out
+walking_rpy,75,A,held-out
+walking_rpy,80,A,held-out
+walking_rpy,0,B,held-out
+walking_rpy,6,B,held-out
+walking_rpy,28,B,held-out
+walking_rpy,54,B,held-out
+walking_rpy,56,B,held-out
+walking_rpy,57,B,held-out
+walking_rpy,58,B,held-out
+walking_rpy,65,B,held-out
+walking_rpy,89,B,held-out
+walking_rpy,30,x,blurred face; person unclear
+walking_static,1,A,held-out
+walking_static,13,A,held-out
+walking_static,15,A,held-out
+walking_static,17,A,held-out
+walking_static,0,B,held-out
+walking_static,8,B,held-out
+walking_static,11,B,held-out
+walking_static,16,B,first frame also shows A
+walking_static,12,x,arm only
+sitting_halfsphere,2,A,knee/camo shorts
+sitting_halfsphere,28,A,held-out
+sitting_halfsphere,76,A,held-out
+sitting_halfsphere,0,B,held-out
+sitting_halfsphere,77,B,held-out
+sitting_halfsphere,83,B,held-out
+sitting_halfsphere,89,B,held-out
+sitting_halfsphere,102,B,held-out
+sitting_halfsphere,107,B,held-out
+sitting_halfsphere,119,B,held-out
+sitting_halfsphere,23,x,skin blob; person unclear

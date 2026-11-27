@@ -298,20 +298,35 @@ cleanest outlines, as on NYU. The tracker splits the two actors into 5 to 21 IDs
 occluded. Videos (`results/tracking/<sequence>_method.mp4`, not committed): photo with IDs and distances, predicted
 depth, and a top-down map with predicted positions (dots, trails) and Kinect positions (rings).
 
-**Trackers** (`tools/tracker_compare.py`; `results/tracking/trackers.csv`). Each sequence has the same 2 people,
-so 2 IDs is ideal.
+**Trackers: keeping the two actors apart** (`tools/reid_eval.py`; `results/tracking/identity.csv`). Each TUM
+sequence shows the same two men (A: black shirt, B: plaid shirt). We hand-labelled who is who: detections are linked
+into short tracklets by a cautious IoU rule, and each tracklet of ≥ 10 frames was labelled from a crop sheet
+(`results/tracking/identity_labels.csv`; unclear ones, e.g. blurred faces, are left out, 83-98% of detections are
+labelled). All boxmot trackers get the same YOLO11s-seg boxes. Cells: identity F1 ↑ (1 = each person always has
+one ID of their own) / IDs used (2 is ideal) / detections filed under the other man's ID ↓.
 
-| Sequence | ByteTrack | BoT-SORT | BoT-SORT + ReID | BoT-SORT + ReID, 10 s memory |
-|---|---|---|---|---|
-| walking_xyz | 11 | 10 | 11 | 9 |
-| walking_halfsphere | 21 | 17 | 18 | 12 |
-| sitting_xyz | 5 | 5 | 5 | 4 |
+| Tracker | walking_xyz | walking_halfsphere | sitting_xyz | walking_rpy* | walking_static* | sitting_halfsphere* | mean IDF1, tuning / held-out* |
+|---|---|---|---|---|---|---|---|
+| ByteTrack (Ultralytics, first demo) | 0.36 / 8 / 0% | 0.33 / 9 / 18% | 0.78 / 5 / 0% | 0.37 / 10 / 0% | 0.44 / 7 / 0% | 0.92 / 5 / 0% | 0.49 / 0.57 |
+| BoT-SORT + YOLO-feature ReID, 10 s (Ultralytics) | 0.47 / 6 / **28%** | 0.72 / 5 / **20%** | 1.00 / 2 / 0% | 0.40 / 8 / **21%** | 0.81 / 5 / 1% | 0.94 / 4 / 0% | 0.73 / 0.72 |
+| ByteTrack (boxmot) | 0.56 / 7 / 0% | 0.37 / 9 / 17% | 0.85 / 3 / 0% | 0.36 / 9 / 0% | 0.56 / 5 / 0% | 0.95 / 3 / 0% | 0.59 / 0.62 |
+| BoT-SORT, motion only (boxmot) | 0.56 / 7 / 0% | 0.52 / 8 / 8% | 0.85 / 3 / 0% | 0.37 / 9 / 0% | 0.44 / 6 / 0% | 0.94 / 3 / 0% | 0.64 / 0.58 |
+| StrongSORT + OSNet (boxmot defaults) | 0.56 / 6 / 0% | 0.32 / 12 / 0% | 0.73 / 7 / 0% | | | | 0.53 / – |
+| BoT-SORT + OSNet, threshold 0.25 | 0.70 / 5 / 0% | 0.52 / 8 / 8% | 1.00 / 2 / 0% | 0.45 / 7 / 2% | 0.78 / 4 / 0% | 0.94 / 3 / 0% | 0.74 / 0.72 |
+| **BoT-SORT + OSNet, threshold 0.35** | 0.80 / 3 / 0% | **0.95 / 4 / 0%** | 1.00 / 2 / 0% | 0.54 / 5 / 5% | 0.95 / 3 / 0% | 0.94 / 3 / 0% | **0.91** / 0.81 |
+| BoT-SORT + OSNet, threshold 0.45 | 0.99 / 2 / 0% | 0.57 / 2 / **34%** | 1.00 / 2 / 0% | 0.55 / 4 / 0% | 1.00 / 2 / 0% | 0.94 / 3 / 0% | 0.85 / **0.83** |
 
-The last column looks best, but crops of each track show it gives one man's ID to the other: its ReID uses YOLO's
-own features, which do not tell the two actors apart. A stricter appearance threshold (0.9) removes most swaps and
-brings walking_halfsphere back to 16 IDs. Fewer IDs here come from wrong merges, so the demo uses plain BoT-SORT
-and the paper reports ID fragmentation as a limitation. The depth scores in the table above do not depend on the
-tracker.
+\* held out: labelled after the threshold was chosen on the first three sequences.
+
+- The ReID built into Ultralytics compares YOLO's own features, which cannot tell the two men apart: its low ID
+  count comes from giving one man's ID to the other (20-28% of detections on the walking sequences).
+- A dedicated person-ReID network (OSNet-x1.0, trained on MSMT17) fixes this, but only once appearance matching is
+  allowed for boxes that do not overlap the lost track (`proximity_thresh` 1.0) and lost tracks are kept 10 s.
+  With boxmot's default gating, OSNet gives exactly the motion-only result on the walking sequences.
+- The appearance threshold trades ID splits against swaps. 0.35 roughly doubles identity F1 over motion-only BoT-SORT
+  on the held-out sequences too (0.58 → 0.81), with at most 5% wrong-person detections. 0.45 is slightly better on
+  average but merges the two men on walking_halfsphere (34%), so the demo uses 0.35 (`track_demo.py --tracker osnet`).
+- Limits: two people, one office, our own labels; walking_rpy (fast camera roll) is still hard (0.54).
 
 ## Figures and demos (in `results/`)
 | Folder | Contents |
@@ -329,6 +344,10 @@ conda env create -f environment.yml && conda activate depth3d
 bash scripts/setup.sh        # code (pinned), checkpoints, DA-2K, iBims-1, NYU -> images, YOLO masks
 ```
 Datasets go to `data/` unless `DATA_ROOT` is set. Re-running `setup.sh` skips finished steps.
+
+**Person ReID (tracking only).** boxmot pins its own pandas/OpenCV, so it lives in a venv on top of the main env:
+`python -m venv --system-site-packages ~/venvs/reid && ~/venvs/reid/bin/pip install boxmot==26.0.0`
+(downloads OSNet weights on first use). Only `reid_eval.py` and `track_demo.py --tracker osnet` need it.
 
 **Colab:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/csgomez25/instance-aware-depth/blob/main/colab/run_on_colab.ipynb)
 opens [`colab/run_on_colab.ipynb`](colab/run_on_colab.ipynb); pick a T4 runtime.
@@ -356,6 +375,8 @@ python wise_ft.py ../runs/<run>/final.pth --alphas 0.25 0.5 0.75   # blended mod
 python wise_table.py                                   # blend table after runs/wise_queue.sh -> results/wise_ft.csv
 python track_demo.py walking_xyz walking_halfsphere sitting_xyz   # people tracking + depth on TUM -> results/tracking/
 python tracker_compare.py                              # ID counts per tracker on TUM -> results/tracking/trackers.csv
+~/venvs/reid/bin/python reid_eval.py detect            # identity eval: cache people + crop sheets to label
+~/venvs/reid/bin/python reid_eval.py score             # trackers vs identity_labels.csv -> results/tracking/identity.csv
 python eval_diode.py --ckpt ../runs/<run>/final.pth --tag <run>   # DIODE indoor, metric + scale-aligned -> results/diode/
 python eval_da2k.py                                # DA-2K accuracy per scene -> results/da2k/
 python eval_ibims.py --ckpt ../runs/<run>/best.pth --tag <run>   # iBims-1 zero-shot, official metrics -> results/ibims/
@@ -395,9 +416,9 @@ results/        small CSV summaries of results
 - NYU Depth V2 (labeled): https://cs.nyu.edu/~fergus/datasets/nyu_depth_v2.html
 - DA-2K: https://huggingface.co/datasets/depth-anything/DA-2K
 - iBims-1: https://www.asg.ed.tum.de/lmf/ibims1/ (core set via rsync, see `scripts/setup.sh`)
-- TUM RGB-D (Sturm et al., IROS 2012), freiburg3 walking_xyz, walking_halfsphere, sitting_xyz, for the tracking
-  demo; not in `setup.sh`. Download into `data/tum/`:
-  `for s in walking_xyz walking_halfsphere sitting_xyz; do curl -L https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_$s.tgz | tar xz -C data/tum; done`
+- TUM RGB-D (Sturm et al., IROS 2012), freiburg3 walking_xyz, walking_halfsphere, sitting_xyz (+ walking_rpy,
+  walking_static, sitting_halfsphere for the held-out tracker test), for the tracking demo; not in `setup.sh`. Download into `data/tum/`:
+  `for s in walking_xyz walking_halfsphere sitting_xyz walking_rpy walking_static sitting_halfsphere; do curl -L https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_$s.tgz | tar xz -C data/tum; done`
 - DIODE (Vasiljevic et al., 2019), indoor val only (325 images, 2.4 GB unpacked); not in `setup.sh`:
   `curl -L http://diode-dataset.s3.amazonaws.com/val.tar.gz | tar xz -C data/diode val/indoors`
 
