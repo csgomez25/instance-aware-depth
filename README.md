@@ -275,27 +275,27 @@ right size; >1 = the room is predicted too small).
 - Boundary F1 falls with fine-tuning (0.066 → 0.016) much more than on NYU. DIODE's laser depth has sharp edges;
   NYU's training depth is Kinect depth filled by inpainting, which likely teaches softer edges (not tested).
 
-**People in 3D, TUM RGB-D** (`tools/track_demo.py`; `results/tracking/tum_people.csv`). YOLO11s-seg + ByteTrack
-track people in three freiburg3 sequences; each person's distance and position come from our depth alone and are
+**People in 3D, TUM RGB-D** (`tools/track_demo.py`; `results/tracking/tum_people.csv`). YOLO11s-seg + BoT-SORT with OSNet
+person ReID (see Trackers below) track people in three freiburg3 sequences; each person's distance and position come from our depth alone and are
 scored against the Kinect depth TUM provides (metric, no scale alignment). Last-epoch H7 weights, seed 0, so one
 model per setting.
 
 | Sequence | Model | Depth error on people (AbsRel) ↓ | Flying pixels around people ↓ | Distance error per person (m) ↓ |
 |---|---|---|---|---|
-| walking_xyz (827 frames) | Zero-shot | 0.460 | **0.362** | 0.78 |
-| | Control | 0.120 | 0.589 | 0.16 |
-| | Method | **0.117** | 0.578 | **0.15** |
-| walking_halfsphere (1021) | Zero-shot | 0.398 | **0.389** | 0.65 |
-| | Control | **0.162** | 0.480 | **0.27** |
-| | Method | 0.164 | 0.470 | 0.28 |
-| sitting_xyz (1219) | Zero-shot | 0.384 | **0.230** | 0.63 |
-| | Control | 0.088 | 0.535 | **0.13** |
+| walking_xyz (827 frames) | Zero-shot | 0.433 | **0.371** | 0.63 |
+| | Control | 0.118 | 0.587 | 0.15 |
+| | Method | **0.116** | 0.576 | **0.14** |
+| walking_halfsphere (1021) | Zero-shot | 0.398 | **0.392** | 0.65 |
+| | Control | **0.160** | 0.486 | **0.26** |
+| | Method | 0.162 | 0.475 | 0.27 |
+| sitting_xyz (1219) | Zero-shot | 0.385 | **0.229** | 0.64 |
+| | Control | 0.088 | 0.536 | **0.13** |
 | | Method | **0.088** | 0.487 | **0.13** |
 
-NYU fine-tuning cuts the distance error to people from 0.6-0.8 m to 0.13-0.28 m. The edge loss lowers flying
+NYU fine-tuning cuts the distance error to people from 0.6 m to 0.13-0.27 m. The edge loss lowers flying
 pixels around people on all three sequences (−0.01 to −0.05) and ties the control on depth. Zero-shot keeps the
-cleanest outlines, as on NYU. The tracker splits the two actors into 5 to 21 IDs when they leave view or are
-occluded. Videos (`results/tracking/<sequence>_method.mp4`, not committed): photo with IDs and distances, predicted
+cleanest outlines, as on NYU. (With ByteTrack the numbers differ by ≤ 0.01 m and ≤ 0.03 AbsRel; only
+confirmed tracks are scored, so the set of person frames changes slightly.) Videos (`results/tracking/<sequence>_method.mp4`): photo with IDs and distances, predicted
 depth, and a top-down map with predicted positions (dots, trails) and Kinect positions (rings).
 
 **Trackers: keeping the two actors apart** (`tools/reid_eval.py`; `results/tracking/identity.csv`). Each TUM
